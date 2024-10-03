@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "959307474859",
+    "firebase_url": "https://app-signup-login2-default-rtdb.firebaseio.com",
+    "project_id": "app-signup-login2",
+    "storage_bucket": "app-signup-login2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:959307474859:android:e7fb0a5237f3f4539cd4ee",
+        "android_client_info": {
+          "package_name": "com.example.appsignuplogin2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ3oYrad35_TJO23CI5tXbPdRsPrCvMFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:959307474859:android:460bb40d8fe31a879cd4ee",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ3oYrad35_TJO23CI5tXbPdRsPrCvMFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,177 @@
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardElevation="4dp"
+    app:cardCornerRadius="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="341dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/initialsHolder"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
+                    app:cardCornerRadius="50dp"
+                    app:cardElevation="0dp">
+
+                    <TextView
+                        android:id="@+id/initials"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:background="@color/blue2"
+                        android:gravity="center"
+                        android:text="A"
+                        android:textColor="@android:color/white"
+                        android:textSize="24sp" />
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/profilePicHolder"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:elevation="5dp"
+                    android:padding="8dp"
+                    android:visibility="gone"
+                    app:cardCornerRadius="50dp">
+
+                    <ImageView
+                        android:id="@+id/profilePic"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@drawable/no_profile_pic"
+                        android:scaleType="centerCrop" />
+                </androidx.cardview.widget.CardView>
+
+                <!-- Add TextView for the user name -->
+                <TextView
+                    android:id="@+id/userNameText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="8dp"
+                    android:text="Username"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+
+
+                <!-- Move actionImageView to this LinearLayout -->
+                <ImageView
+                    android:id="@+id/actionImageView"
+                    android:layout_width="25dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="150dp"
+                    android:src="@drawable/ic_menu_dots" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Add the dateTextView below the LinearLayout containing initials, username, and actionImageView -->
+        <TextView
+            android:id="@+id/dateTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@android:color/black"
+            android:textSize="10dp" />
+
+        <!-- Tweet Content -->
+        <TextView
+            android:id="@+id/tweetText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            android:textSize="20dp" />
+
+        <!-- Image (Optional) -->
+        <!--        <ImageView
+            android:id="@+id/tweetImage"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />-->
+
+        <!-- Comments Section -->
+        <LinearLayout
+            android:id="@+id/commentsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <!-- Comment Views will be added here programmatically -->
+        </LinearLayout>
+
+        <!-- Like and Comments Section -->
+        <LinearLayout
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:layout_marginTop="50dp">
+
+            <ImageView
+                android:id="@+id/likeButton"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_heart_outline"
+                android:layout_marginEnd="8dp"
+                android:layout_marginLeft="20dp" />
+            <TextView
+                android:id="@+id/likeCountText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 likes"
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_gravity="center_vertical"
+                />
+
+            <ProgressBar
+                android:id="@+id/likeProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+
+            <ImageView
+                android:id="@+id/comment_image"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="70dp"
+                android:src="@drawable/ic_comment" />
+
+            <ImageView
+                android:id="@+id/show_comment"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="80dp"
+                android:src="@drawable/ic_show_comment">
+            </ImageView>
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

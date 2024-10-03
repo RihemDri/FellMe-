@@ -1,0 +1,1109 @@
+package com.example.myapplication;
+
+
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.NavUtils;
+
+import com.ekn.gruzer.gaugelibrary.HalfGauge;
+import com.ekn.gruzer.gaugelibrary.Range;
+import com.example.myapplication.model.Tweet;
+import com.example.myapplication.model.User;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
+import com.github.mikephil.charting.utils.EntryXComparator;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.jolenechong.wordcloud.WordCloud;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+
+
+public class AdminActivity extends AppCompatActivity {
+
+    //UI Elements
+    ConstraintLayout progress;
+    PieChart genderPieChart;
+    PieChart positionBarChart;
+    HorizontalBarChart tweetPerHourChart;
+    BarChart departmentSentimentChart;
+    PieChart sentimentPieChart;
+    PieChart gaugePieChart;
+    LineChart sentimentChart;
+
+    TextView outOfValue, outOfTotle, outOfVerdict;
+    ImageView smileyFace;
+
+    FrameLayout wordCloud;
+    HalfGauge gauge;
+
+
+
+    // Firebase
+    private FirebaseAuth auth;
+
+    private DatabaseReference databaseReference;
+
+
+    private List<User> users = new ArrayList<>();
+
+    private TextView userCountTextView, tweetCountTextView;
+
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_admin);
+
+        getSupportActionBar().setTitle("Admin Dashbord");
+        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+
+        genderPieChart = findViewById(R.id.genderPieChart);
+        positionBarChart = findViewById(R.id.departmentsChart);
+        progress = findViewById(R.id.progressHolder);
+        userCountTextView = findViewById(R.id.numberOfUsers);
+        tweetCountTextView = findViewById(R.id.numberOfTweets);
+        tweetPerHourChart = findViewById(R.id.tweetPerHourChart);
+        sentimentChart = findViewById(R.id.sentimentChart);
+        wordCloud = findViewById(R.id.wordCloudView);
+
+
+        outOfValue = findViewById(R.id.outOfValue);
+        outOfTotle = findViewById(R.id.outOfTotle);
+        outOfVerdict = findViewById(R.id.outOfVerdict);
+
+        smileyFace = findViewById(R.id.smileyFace);
+        departmentSentimentChart = findViewById(R.id.departmentSentimentChart);
+
+        //gaugePieChart = findViewById(R.id.gaugepieChart);
+        gauge = findViewById(R.id.halfGauge);
+
+
+
+
+
+
+
+        databaseReference = FirebaseDatabase.getInstance().getReference("tweets");
+
+
+
+
+        loadUserData();
+        loadTweetData();
+
+        getUsersList();
+
+        loadDepartmentSentimentData();
+
+        progress.setVisibility(View.INVISIBLE);
+        fetchSentimentData();
+    }
+
+    private void loadDepartmentSentimentData() {
+        DatabaseReference tweetsHolder = FirebaseDatabase.getInstance().getReference("Users");
+        tweetsHolder.get().addOnCompleteListener(task -> {
+            HashMap<String, User> userIds = new HashMap<>();
+            if (task.isSuccessful()) {
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    User value = snapshot.getValue(User.class); // Value of the child
+                    String key = snapshot.getKey();
+                    userIds.put(key,value);
+                }
+
+                DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
+                tweetRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.O)
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<Tweet> tweets = new ArrayList<>();
+
+                        for (DataSnapshot tweetSnapshot : snapshot.getChildren()) {
+                            Tweet value = tweetSnapshot.getValue(Tweet.class); // Value of the child
+                            tweets.add(value);
+                        }
+
+                        // Group tweets by userId and count prediction results
+                        Map<String, Map<String, Long>> userPredictionCounts = tweets.stream()
+                                .collect(Collectors.groupingBy(Tweet::getUserId, Collectors.groupingBy(Tweet::getPredictionResult, Collectors.counting())));
+
+                        // Group prediction counts by role (department)
+                        Map<String, Map<String, Long>> departmentPredictionCounts = new HashMap<>();
+                        for (Map.Entry<String, Map<String, Long>> entry : userPredictionCounts.entrySet()) {
+                            String userId = entry.getKey();
+                            Map<String, Long> predictions = entry.getValue();
+
+                            User user = userIds.get(userId);
+
+                            if (user != null) {
+                                String activity = user.getActivity();
+
+
+                                departmentPredictionCounts.putIfAbsent(activity, new HashMap<>());
+                                Map<String, Long> departmentPredictions = departmentPredictionCounts.get(activity);
+
+                                for (Map.Entry<String, Long> predictionEntry : predictions.entrySet()) {
+                                    departmentPredictions.merge(predictionEntry.getKey(), predictionEntry.getValue(), Long::sum);
+                                }
+                            }
+                        }
+
+                        List<BarEntry> departmentEntries = new ArrayList<>();
+                        List<String> departments = new ArrayList<>();
+
+                        departmentPredictionCounts.forEach((role, predictionMap) -> {
+
+                            // Create a BarEntry for this department with sentiment values
+                            departmentEntries.add(new BarEntry(departments.size(), new float[]{
+                                    predictionMap.getOrDefault("Very Positive", 0L),
+                                    predictionMap.getOrDefault("Positive", 0L),
+                                    predictionMap.getOrDefault("Neutral", 0L),
+                                    predictionMap.getOrDefault("Negative", 0L),
+                                    predictionMap.getOrDefault("Very Negative", 0L)
+                            }));
+
+                            // Add the department name to the list for labeling
+                            departments.add(role);
+
+                            // Print out the prediction results for debugging
+                            System.out.println("Department: " + role);
+                            predictionMap.forEach((prediction, count) -> {
+                                System.out.println(prediction + ": " + count);
+                            });
+                            System.out.println();
+                        });
+
+                        BarDataSet set = new BarDataSet(departmentEntries, "");
+
+                        // TODO: change colors
+                        set.setColors(new int[]{Color.MAGENTA, Color.GREEN, Color.BLUE, Color.YELLOW, Color.RED});
+
+                        set.setStackLabels(new String[]{"Very Positive", "Positive", "Neutral", "Negative", "Very Negative"});
+
+                        BarData data = new BarData(set);
+                        departmentSentimentChart.setData(data);
+                        float barWidth = 0.4f; // Example width, adjust as needed
+                        data.setBarWidth(barWidth);
+
+                        departmentSentimentChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(departments));
+                        departmentSentimentChart.getXAxis().setGranularity(1f);
+                        departmentSentimentChart.getXAxis().setGranularityEnabled(true);
+
+                        departmentSentimentChart.invalidate();
+                        departmentSentimentChart.getDescription().setEnabled(false);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+
+            } else {
+                Toast.makeText(AdminActivity.this, "Failed to get Users" + task.getException().getMessage() ,Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void loadUserData() {
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users");
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                long userCount = snapshot.getChildrenCount();
+                userCountTextView.setText(userCount + " users");
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void loadTweetData() {
+        DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
+        tweetRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Tweet> tweets = new ArrayList<>();
+
+                long tweetCount = snapshot.getChildrenCount();
+                tweetCountTextView.setText(tweetCount + " tweets");
+
+                List<Calendar> calendars = new ArrayList<>();
+
+                for (DataSnapshot tweetSnapshot : snapshot.getChildren()) {
+                    Tweet value = tweetSnapshot.getValue(Tweet.class); // Value of the child
+                    tweets.add(value);
+                    System.out.println(value);
+
+                    String time =tweetSnapshot.child("time").getValue(String.class);
+                    String date =tweetSnapshot.child("date").getValue(String.class);
+
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                    try {
+                        // Combine the date and time into one string
+                        String dateTimeString = date + " " + time;
+
+                        // Parse the combined string into a Date object
+                        Date dateTime = dateFormat.parse(dateTimeString);
+
+                        // Create a Calendar object and set the parsed Date
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(dateTime);
+
+                        calendars.add(calendar);
+                        System.out.println(calendar.getTime());
+
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+                // Find the most recent date
+                Calendar mostRecentDate = getMostRecentDate(calendars);
+
+                // Calculate the start and end of the month for the most recent date
+                Calendar startOfMonth = getStartOfMonth(mostRecentDate);
+                Calendar endOfMonth = getEndOfMonth(startOfMonth);
+
+                // Initialize the dayOfWeekCounts with all days of the week set to 0
+                Map<DayOfWeek, Integer> dayOfWeekCounts = new EnumMap<>(DayOfWeek.class);
+                for (DayOfWeek day : DayOfWeek.values()) {
+                    dayOfWeekCounts.put(day, 0);
+                }
+
+                // Count occurrences of each day of the week in the last month
+                for (Calendar calendar : calendars) {
+                    if (calendar.after(startOfMonth) && calendar.before(endOfMonth)) {
+                        DayOfWeek dayOfWeek = DayOfWeek.of(calendar.get(Calendar.DAY_OF_WEEK));
+                        dayOfWeekCounts.put(dayOfWeek, dayOfWeekCounts.get(dayOfWeek) + 1);
+                    }
+                }
+
+                // Print results
+                for (Map.Entry<DayOfWeek, Integer> entry : dayOfWeekCounts.entrySet()) {
+                    System.out.println(entry.getKey().name() + ": " + entry.getValue());
+                }
+
+                setupTweetHourBarChart(tweetPerHourChart, dayOfWeekCounts);
+                calculateOverallSentiment(tweets);
+                setupSentimentLineChart(sentimentChart, tweets, calendars);
+                setupWordCloud(tweets);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void setupWordCloud(List<Tweet> tweets) {
+        WordCloud wordCloudView = new WordCloud(getApplication(), null);
+        wordCloud.addView(wordCloudView);
+
+        wordCloudView.setParagraph(
+                "Add some text you'd like to see a word cloud of here",
+                 10,
+                 false
+        );
+
+        List<String> words = new ArrayList<>();
+        /*words.add("human");
+        words.add("tasks");
+        words.add("tasks");
+        words.add("AI");
+        words.add("AI");
+        words.add("AI");
+        words.add("AI");
+        words.add("systems");
+        words.add("systems");*/
+        WordFrequencyAnalyzer wordFrequency = new WordFrequencyAnalyzer();
+        HashMap<String, Integer> wordCountMap = new HashMap<>();
+        wordCountMap = WordFrequencyAnalyzer.getWordFrequency(tweets);
+
+        Map<String, Integer> newWords = new HashMap<>();
+
+        // Process entries to truncate keys if necessary
+        for (Map.Entry<String, Integer> entry : wordCountMap.entrySet()) {
+            String key = entry.getKey();
+            Integer value = entry.getValue();
+
+            // Limit the key to 10 characters
+            if (key.length() > 10) {
+                key = key.substring(0, 7) + "..."; // Truncate to 10 characters
+            }
+
+            // Add the truncated key and original value to the new map
+            newWords.put(key, value);
+        }
+
+        for (Map.Entry<String, Integer> entry : newWords.entrySet()) {
+            String word = entry.getKey();
+            int frequency = entry.getValue();
+            words.add(word + "(" + frequency + ")");
+        }
+
+        wordCloudView.setWords(words, 10);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void setupSentimentLineChart(LineChart sentimentChart, List<Tweet> tweets, List<Calendar> calendars) {
+
+        // Create line data
+        LineData lineData = createLineData(tweets);
+
+        // Apply custom ValueFormatter to Y-Axis
+        YAxis yAxis = sentimentChart.getAxisLeft();
+        yAxis.setValueFormatter(new SentimentValueFormatter());
+
+        // Set data to the chart
+        sentimentChart.setData(lineData);
+        sentimentChart.getAxisRight().setEnabled(false);
+        sentimentChart.getXAxis().setEnabled(true);
+        sentimentChart.getDescription().setEnabled(false);
+        sentimentChart.getAxisLeft().setDrawAxisLine(true);
+        sentimentChart.getAxisLeft().setDrawGridLines(false);
+
+        // Format X-Axis labels
+        List<String> dates = getDatesFromTweets(tweets); // Extract dates from tweets
+        sentimentChart.getXAxis().setValueFormatter(new XAxisValueFormatter(dates));
+
+        sentimentChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+
+
+        sentimentChart.invalidate(); // Refresh the chart
+    }
+
+    private List<String> getDatesFromTweets(List<Tweet> tweets) {
+        List<String> dates = new ArrayList<>();
+        for (Tweet tweet : tweets) {
+            dates.add(tweet.getDate()); // Assuming getDate() returns the date string
+        }
+        return dates;
+    }
+
+    public class XAxisValueFormatter extends ValueFormatter {
+
+        private final SimpleDateFormat dateFormat;
+        private final List<String> dates;
+
+        public XAxisValueFormatter(List<String> dates) {
+            this.dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            this.dates = dates;
+        }
+
+        @Override
+        public String getFormattedValue(float value) {
+            // Ensure the value is within the bounds of your data
+            // Convert float timestamp to milliseconds
+            long timestampInMillis = (long) (value);
+
+            // Create a Date object from the timestamp
+            Date date = new Date(timestampInMillis);
+
+            // Format the Date object to "1 Sept" format
+            SimpleDateFormat dateFormat = new SimpleDateFormat("d MMM", Locale.ENGLISH);
+
+            // Get the formatted date string
+            String formattedDate = dateFormat.format(date);
+            return formattedDate;
+        }
+    }
+
+    // Method to convert sentiment to numerical value
+    private static float sentimentToValue(String sentiment) {
+        switch (sentiment) {
+            case "Very Positive":
+                return  4;
+            case "Positive":
+                return 3;
+            case "Neutral":
+                return 2;
+            case "Negative":
+                return 1;
+            case "Very Negative":
+                return 0;
+            default:
+                return Float.NaN; // For no prediction or unknown values
+        }
+    }
+
+    public class SentimentValueFormatter extends ValueFormatter {
+
+        @Override
+        public String getFormattedValue(float value) {
+            if (Float.isNaN(value)) {
+                return ""; // For no prediction or unknown values
+            }
+            switch ((int) value) {
+                case 4:
+                    return  "Very Positive";
+                case 3:
+                    return "Positive";
+                case 2:
+                    return "Neutral";
+                case 1:
+                    return "Negative";
+                case 0:
+                    return "Very Negative";
+                default:
+                    return "";
+            }
+        }
+    }
+
+    // Method to create a list of Entry from tweet data
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public LineData createLineData(List<Tweet> tweets) {
+        List<Entry> entries = new ArrayList<>();
+
+        // Assuming tweets are sorted by date
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        for (Tweet tweet : tweets) {
+            try {
+                Date date = dateFormat.parse(tweet.getDate());
+                float x = date.getTime(); // Use timestamp as X value
+                float y = sentimentToValue(tweet.getPredictionResult());
+
+                System.out.println("sentimentLineChart "+ x + " " + y);
+
+                // Check if the sentiment value is valid
+                if (!Float.isNaN(y)) {
+                    entries.add(new Entry(x, y));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Sort entries by X value (date)
+        entries.sort(new EntryXComparator());
+
+        // Create LineDataSet
+        LineDataSet dataSet = new LineDataSet(entries, "Sentiment Over Time");
+        dataSet.setColor(Color.BLUE);
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setLineWidth(1);
+
+        dataSet.setValueFormatter(new CustomValueFormatter());
+
+        return new LineData(dataSet);
+    }
+
+    public class CustomValueFormatter extends ValueFormatter {
+
+        @Override
+        public String getFormattedValue(float value) {
+            if (value == 4) {
+                return "Very Positive";
+            } else if (value == 3) {
+                return "Positive";
+            }else if (value == 2) {
+                return "Neutral";
+            } else if (value == 1) {
+                return "Negative";
+            }else if (value == 0) {
+                return "Very Negative";
+            }
+            return super.getFormattedValue(value);
+        }
+    }
+
+    private void calculateOverallSentiment(List<Tweet> tweets) {
+        int veryPositiveCount = 0;
+        int positiveCount = 0;
+        int veryNegativeCount = 0;
+        int negativeCount = 0;
+        int neutralCount = 0;
+
+        for (Tweet tweet : tweets) {
+            if(tweet.getPredictionResult().equals("Very Positive")) {
+                veryPositiveCount++;
+            } else if (tweet.getPredictionResult().equals("Positive")) {
+                positiveCount++;
+            } else if (tweet.getPredictionResult().equals("Very Negative")) {
+                veryNegativeCount++;
+            } else if (tweet.getPredictionResult().equals("Negative")) {
+                negativeCount++;
+            } else if (tweet.getPredictionResult().equals("Neutral")) {
+                neutralCount++;
+            }
+
+        }
+
+        // Calculate total sentiment count
+        int totalCount = positiveCount + negativeCount + neutralCount + veryPositiveCount + veryNegativeCount;
+
+        // Determine which sentiment has the most values
+        String mostSentiment = findMostSentiment(veryPositiveCount, positiveCount,neutralCount ,negativeCount, veryNegativeCount );
+        int mostCount = getMostCount(veryPositiveCount,positiveCount,neutralCount, negativeCount, veryNegativeCount);
+
+        // Format the output
+        String result = String.format("%d out of %d sentiments are %s", mostCount, totalCount, mostSentiment);
+
+        // Print the result
+        System.out.println(result);
+
+        outOfValue.setText(String.valueOf(mostCount));
+        outOfTotle.setText("out of " + totalCount);
+        outOfVerdict.setText(mostSentiment);
+        if (mostSentiment.equals("Positive") || mostSentiment.equals("Very Positive")) {
+            outOfVerdict.setTextColor(Color.GREEN);
+            smileyFace.setImageResource(R.drawable.ic_positive_smiley);
+        } else if (mostSentiment.equals("Negative") || mostSentiment.equals("Very Negative")) {
+            outOfVerdict.setTextColor(Color.RED);
+            smileyFace.setImageResource(R.drawable.ic_negative_smiley);
+        } else {
+            outOfVerdict.setTextColor(Color.GRAY);
+            smileyFace.setImageResource(R.drawable.ic_neutral_smiley);
+        }
+    }
+
+    private static String findMostSentiment(int veryPositive, int positive, int neutral, int negative, int veryNegative) {
+        if (veryPositive >= positive && veryPositive >= neutral && veryPositive >= negative && veryPositive >= veryNegative) {
+            return "Very Positive";
+        } else if (positive >= veryPositive && positive >= neutral && positive >= negative && positive >= veryNegative) {
+            return "Positive";
+        } else if (neutral >= veryPositive && neutral >= positive && neutral >= negative && neutral >= veryNegative) {
+            return "Neutral";
+        } else if (negative >= veryPositive && negative >= positive && negative >= neutral && negative >= veryNegative) {
+            return "Negative";
+        } else {
+            return "Very Negative";
+        }
+    }
+
+    private static int getMostCount(int veryPositive, int positive, int neutral, int negative, int veryNegative) {
+        return Math.max(Math.max(Math.max(veryPositive, positive), Math.max(neutral, negative)), veryNegative);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void setupTweetHourBarChart(HorizontalBarChart chart, Map<DayOfWeek, Integer> dayOfWeekCountMap) {
+        // Create the data for the chart
+        List<BarEntry> entries = new ArrayList<>();
+
+        // Define the order of days from Sunday to Saturday
+        DayOfWeek[] daysOfWeek = {DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY};
+
+        // Populate the entries from the dayOfWeekCountMap
+        for (int i = 0; i < daysOfWeek.length; i++) {
+            DayOfWeek dayOfWeek = daysOfWeek[i];
+            float xValue = i; // X-axis value is the index in the daysOfWeek array
+            int count = dayOfWeekCountMap.getOrDefault(dayOfWeek, 0);
+            entries.add(new BarEntry(xValue, count));
+        }
+
+        // Reverse the entries list to ensure the chart is ordered from Sunday to Saturday
+        Collections.reverse(entries);
+
+        // Creating a dataset and assigning colors for each day
+        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts");
+        dataSet.setColors(Color.CYAN); // Set color for the bars
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueTextSize(12f);
+
+        // Set the custom value formatter
+        dataSet.setValueFormatter(new RoundedValueFormatter());
+
+        BarData data = new BarData(dataSet);
+        data.setBarWidth(0.5f);
+
+        chart.setData(data);
+
+        // Customizing the X-axis
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setDrawAxisLine(false);
+        xAxis.setGranularity(1f);
+        xAxis.setValueFormatter(new ValueFormatter() {
+            private final String[] days = new String[]{"Sat", "Fri", "Thu", "Wed", "Tue", "Mon", "Sun"};
+
+            @Override
+            public String getFormattedValue(float value) {
+                return days[(int) value % days.length];
+            }
+        });
+
+        // Customizing the Y-axis
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setEnabled(false);
+
+        YAxis rightAxis = chart.getAxisRight();
+        rightAxis.setDrawGridLines(false);
+        rightAxis.setDrawAxisLine(false);
+        rightAxis.setAxisMinimum(0f);
+        rightAxis.setEnabled(false);
+
+        chart.getDescription().setEnabled(false);
+        chart.setFitBars(true);
+
+        chart.animateY(1500);
+        chart.invalidate(); // Refresh chart
+    }
+
+
+
+
+    //////////////   ///////////////////////////////////////////////////////////////////////////////////
+    //creating ActionBar Menutweets
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        //Inflater menu Items
+        getMenuInflater().inflate(R.menu.common_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+    //when any menu item is selected
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id =item.getItemId();if (id == android.R.id.home){
+            NavUtils.navigateUpFromSameTask(AdminActivity.this);
+        }else if  (id == R.id.menu_refresh){
+            //Refresh Activity
+            startActivity(getIntent());
+            finish();
+            overridePendingTransition(0,0);
+
+        } else if (id == R.id.my_profile){
+            Intent intent = new Intent(AdminActivity.this, UserProfileActivity.class);
+            startActivity(intent);
+            finish();
+        }
+        else if (id == R.id.menu_update_profile){
+            Intent intent = new Intent(AdminActivity.this,UpdateProfileActivity.class);
+            startActivity(intent);
+            finish();
+        } else if (id ==R.id.menu_update_email) {
+            Intent intent = new Intent(AdminActivity.this,UpdateEmailActivity.class);
+            startActivity(intent);
+            finish();
+        }else if (id ==R.id.menu_change_password) {
+            Intent intent = new Intent(AdminActivity.this,ChangePasswordActivity.class);
+            startActivity(intent);
+        } else if (id == R.id.menu_delete_profile) {
+            Intent intent = new Intent(AdminActivity.this,DeleteActivity.class);
+            startActivity(intent);
+            finish();
+        } else if (id == R.id.menu_logout) {
+            auth.signOut();
+            Toast.makeText(AdminActivity.this,"Logged Out",Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(AdminActivity.this,MainActivity.class);
+
+            //clear
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK |Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();//close user profile Activity
+
+        }else {
+            Toast.makeText(AdminActivity.this,"Something went wrong ",Toast.LENGTH_LONG).show();
+
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+////////////////////////////////////////////////////////////////////////
+
+
+    private void getUsersList() {
+        auth = FirebaseAuth.getInstance();
+        FirebaseUser firebaseUser = auth.getCurrentUser();
+
+        if (firebaseUser == null ){
+            Toast.makeText(AdminActivity.this, "Something went wrong! User details are not available at the moment !  ", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(AdminActivity.this, LoginActivity.class);
+            startActivity(intent);
+        }
+
+        assert firebaseUser != null;
+        DatabaseReference tweetsHolder = FirebaseDatabase.getInstance().getReference("Users");
+        tweetsHolder.get().addOnCompleteListener(task -> {
+            List<User> valuesList = new ArrayList<>();
+            if (task.isSuccessful()) {
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    User value = snapshot.getValue(User.class); // Value of the child
+                    valuesList.add(value);
+                }
+                users = valuesList;
+                Log.i("test", "users: " + users.toString());
+                setupGenderPieChart(genderPieChart, users);
+                setupPositionBarChart(positionBarChart, users);
+            } else {
+                Toast.makeText(AdminActivity.this, "Failed to get tweets" + task.getException().getMessage() ,Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public void setupPositionBarChart(PieChart pieChart, List<User> users) {
+        Map<String, Integer> positionCountMap = new HashMap<>();
+
+      /*  for (User user : users) {
+            String position = user.getActivity();
+            positionCountMap.put(position, positionCountMap.getOrDefault(position, 0)+1);
+        }*/
+        for (User user : users) {
+            String position = user.getActivity();
+
+            Log.i("chart", "position: " + position);
+            if (positionCountMap.containsKey(position)) {
+                positionCountMap.put(position, positionCountMap.get(position) + 1);
+            } else {
+                positionCountMap.put(position, 1);
+            }
+        }
+
+        System.out.println("positionCountmap "+ positionCountMap);
+
+        List<PieEntry> entries = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : positionCountMap.entrySet()) {
+            entries.add(new PieEntry(entry.getValue(), entry.getKey()));
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS); // You can customize the colors
+
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(14);
+        dataSet.setValueFormatter(new RoundedValueFormatter());
+
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        Description desc = new Description();
+        desc.setText("Work Positions");
+        pieChart.setDescription(desc);
+        pieChart.invalidate(); // refresh
+    }
+
+    public void setupGenderPieChart(PieChart pieChart, List<User> users) {
+        int maleCount = 0;
+        int femaleCount = 0;
+
+        for (User user : users) {
+            if ("Male".equalsIgnoreCase(user.getGender())) {
+                maleCount++;
+            } else if ("Female".equalsIgnoreCase(user.getGender())) {
+                femaleCount++;
+            }
+        }
+
+        List<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry(maleCount, "Male"));
+        entries.add(new PieEntry(femaleCount, "Female"));
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(Color.BLUE, Color.rgb(255, 105, 180)); // Blue for Male, Pink for Female
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(14);
+        dataSet.setValueFormatter(new RoundedValueFormatter());
+
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        Description desc = new Description();
+        desc.setText("Gender Distribution");
+        pieChart.setDescription(desc);
+        pieChart.setDrawEntryLabels(false);
+        pieChart.invalidate(); // refresh
+    }
+    private void loadSentimentData(){
+        DatabaseReference sentimentRef = FirebaseDatabase.getInstance().getReference("predictionResult" );
+        sentimentRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int positiveCount = 0;
+                int negativeCount = 0;
+                int neutralCount = 0;
+
+                for (DataSnapshot sentimentSnapshot : snapshot.getChildren()) {
+                    String sentiment = sentimentSnapshot.child("predictionResult").getValue(String.class);
+                    if ("positive".equalsIgnoreCase(sentiment)) {
+                        positiveCount++;
+                    } else if ("negative".equalsIgnoreCase(sentiment)) {
+                        negativeCount++;
+                    } else if ("neutral".equalsIgnoreCase(sentiment)) {
+                        neutralCount++;
+                    }
+                }
+
+                setupSentimentPieChart(sentimentPieChart, positiveCount, negativeCount, neutralCount);
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(AdminActivity.this, "Failed to load sentiment data: " + error.getMessage(), Toast.LENGTH_LONG).show();
+
+
+            }
+        });
+    }
+    private void setupSentimentPieChart(PieChart pieChart, int positiveCount, int negativeCount, int neutralCount) {
+        List<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry(positiveCount, "Positive"));
+        entries.add(new PieEntry(negativeCount, "Negative"));
+        entries.add(new PieEntry(neutralCount, "Neutral"));
+
+        PieDataSet dataSet = new PieDataSet(entries, "Sentiment Analysis");
+        dataSet.setColors(new int[]{Color.GREEN, Color.RED, Color.YELLOW});
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.setCenterText("Sentiment Analysis");
+        pieChart.invalidate(); // refresh
+    }
+
+    private static Calendar parseDate(String dateStr, SimpleDateFormat sdf) throws Exception {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(sdf.parse(dateStr));
+        return calendar;
+    }
+
+    private static Calendar getMostRecentDate(List<Calendar> calendars) {
+        Calendar mostRecentDate = Calendar.getInstance();
+        mostRecentDate.setTimeInMillis(Long.MIN_VALUE); // Start with the smallest value
+
+        for (Calendar calendar : calendars) {
+            if (calendar.after(mostRecentDate)) {
+                mostRecentDate = calendar;
+            }
+        }
+        return mostRecentDate;
+    }
+
+    private static Calendar getStartOfMonth(Calendar date) {
+        Calendar startOfMonth = (Calendar) date.clone();
+        startOfMonth.set(Calendar.DAY_OF_MONTH, 1);
+        return startOfMonth;
+    }
+
+    private static Calendar getEndOfMonth(Calendar startOfMonth) {
+        Calendar endOfMonth = (Calendar) startOfMonth.clone();
+        endOfMonth.add(Calendar.MONTH, 1);
+        endOfMonth.add(Calendar.DAY_OF_MONTH, -1);
+        return endOfMonth;
+    }
+    private void setupPieChart() {
+        gaugePieChart.setRotationAngle(0);
+        gaugePieChart.setMaxAngle(360f);  // Display half of the pie chart
+        gaugePieChart.setDrawHoleEnabled(true);  // Display a hole in the center
+        gaugePieChart.setUsePercentValues(true);  // Display values as percentages
+        gaugePieChart.getDescription().setEnabled(false);  // Disable description text
+        gaugePieChart.getLegend().setEnabled(false);  // Disable the chart legend
+    }
+
+    private void fetchSentimentData() {
+        DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
+        // Add a listener to get data from Firebase Realtime Database
+        tweetRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                int veryPositiveCount = 0;
+                int positiveCount = 0;
+                int neutralCount = 0;
+                int negativeCount = 0;
+                int veryNegativeCount = 0;
+                int totalCount = 0;
+
+
+
+
+                // Iterate through all tweets in the database
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String sentiment = snapshot.child("predictionResult").getValue(String.class);
+                    Log.i("test22", sentiment);
+                    if (sentiment != null) {
+                        switch (sentiment) {
+                            case "Very Positive":
+                                veryPositiveCount++;
+                                break;
+                            case "Positive":
+                                positiveCount++;
+                                break;
+                            case "Neutral":
+                                neutralCount++;
+                                break;
+                            case "Negative":
+                                negativeCount++;
+                                break;
+                            case "Very Negative":
+                                veryNegativeCount++;
+                                break;
+                        }
+                        totalCount++;
+                    }
+                }
+                if (totalCount == 0) {
+                    Log.e("PieChart", "No data available");
+                    return;
+                }
+
+                // Calculate the percentages for each sentiment
+                float veryPositivePercent = (veryPositiveCount / (float) totalCount) * 100;
+                float positivePercent = (positiveCount / (float) totalCount) * 100;
+                float neutralPercent = (neutralCount / (float) totalCount) * 100;
+                float negativePercent = (negativeCount / (float) totalCount) * 100;
+                float veryNegativePercent = (veryNegativeCount / (float) totalCount) * 100;
+
+                Log.i("test", veryPositivePercent + " " + positivePercent + " " + neutralPercent + " " + negativePercent + " " + veryNegativePercent);
+                // Update the chart with the calculated percentages
+                //updateChart(veryPositivePercent, positivePercent, neutralPercent, negativePercent, veryNegativePercent);
+                updateGauge(veryPositivePercent, positivePercent, neutralPercent, negativePercent, veryNegativePercent);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors
+                Log.e("FirebaseError", databaseError.getMessage());
+            }
+        });
+    }
+
+    private void updateChart(float veryPositivePercent, float positivePercent, float neutralPercent, float negativePercent, float veryNegativePercent) {
+        List<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry(veryPositivePercent, "Very Positive"));
+        entries.add(new PieEntry(positivePercent, "Positive"));
+        entries.add(new PieEntry(neutralPercent, "Neutral"));
+        entries.add(new PieEntry(negativePercent, "Negative"));
+        entries.add(new PieEntry(veryNegativePercent, "Very Negative"));
+
+        PieDataSet dataSet = new PieDataSet(entries, "Sentiments");
+        dataSet.setColors(new int[]{Color.GREEN, Color.BLUE, Color.GRAY, Color.YELLOW, Color.RED});
+
+        PieData data = new PieData(dataSet);
+        gaugePieChart.setData(data);
+        gaugePieChart.invalidate();  // Refresh the chart
+        Log.i("test", data.toString());
+
+}
+
+    private void updateGauge(float veryPositivePercent, float positivePercent, float neutralPercent, float negativePercent, float veryNegativePercent) {
+        List<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry(veryPositivePercent, "Very Positive"));
+        entries.add(new PieEntry(positivePercent, "Positive"));
+        entries.add(new PieEntry(neutralPercent, "Neutral"));
+        entries.add(new PieEntry(negativePercent, "Negative"));
+        entries.add(new PieEntry(veryNegativePercent, "Very Negative"));
+
+        Double cumulative = 0.0;
+
+        // Very positive
+        Range range = new Range();
+        range.setColor(Color.MAGENTA);
+        range.setFrom(0.0);
+        range.setTo(veryPositivePercent);
+
+        cumulative += veryPositivePercent;
+
+        //Positive
+        Range range2 = new Range();
+        range2.setColor(Color.GREEN);
+        range2.setFrom(cumulative);
+        range2.setTo(cumulative + positivePercent);
+
+        cumulative += positivePercent;
+
+        Range range3 = new Range();
+        range3.setColor(Color.BLUE);
+        range3.setFrom(cumulative);
+        range3.setTo(cumulative + neutralPercent);
+
+        cumulative += neutralPercent;
+
+        Range range4 = new Range();
+        range4.setColor(Color.YELLOW);
+        range4.setFrom(cumulative);
+        range4.setTo(cumulative + negativePercent);
+
+        cumulative += negativePercent;
+
+        Range range5 = new Range();
+        range5.setColor(Color.RED);
+        range5.setFrom(cumulative);
+        range5.setTo(cumulative + veryNegativePercent);
+
+        cumulative += veryNegativePercent;
+
+// Add color ranges to gauge
+        gauge.addRange(range);
+        gauge.addRange(range2);
+        gauge.addRange(range3);
+        gauge.addRange(range4);
+        gauge.addRange(range5);
+
+// Set min, max, and current value
+        gauge.setMinValue(0.0);
+        gauge.setMaxValue(cumulative);
+        Float max = Math.max(veryPositivePercent, Math.max(positivePercent, Math.max(neutralPercent, Math.max(negativePercent, veryNegativePercent))));
+        gauge.setValue(cumulative - max);
+
+    }
+}
+
+
+
+

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:padding="15dp">
+
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageView_logo"
+            android:layout_marginTop="30dp"
+            app:srcCompat="@drawable/mobelitelogo"
+            android:maxWidth="200dp"
+            android:adjustViewBounds="true"
+            android:layout_centerHorizontal="true" />
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="400dp"
+            android:id="@+id/imageView_middle"
+            android:layout_below="@id/imageView_logo"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/im223"
+            >
+
+        </ImageView>
+
+
+        <Button
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:id="@+id/button_login"
+            android:text="Login"
+            android:layout_marginTop="400dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/corner_button_login"
+            android:textColor="@color/white"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:id="@+id/button_register"
+            android:text="Register"
+            android:layout_below="@id/button_login"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:textColor="@color/white"
+            android:background="@drawable/corner_button_register"
+            android:layout_marginTop="5dp"
+            android:layout_centerHorizontal="true"/>
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:padding="50dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/textView_main_head"
+                android:layout_marginTop="500dp"
+                android:text="Welcome"
+                android:textSize="30dp"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline"/>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</ScrollView>
