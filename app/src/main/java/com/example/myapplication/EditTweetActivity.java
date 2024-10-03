@@ -1,7 +1,9 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -44,6 +46,9 @@ public class EditTweetActivity extends AppCompatActivity {
         editTweetText = findViewById(R.id.editTweetText);
         saveButton = findViewById(R.id.save_button);
 
+        Button cancelButton = findViewById(R.id.cancel_button);
+
+
         tweetId = getIntent().getStringExtra("tweet_id");
         String tweetContent = getIntent().getStringExtra("tweet");
 
@@ -59,6 +64,16 @@ public class EditTweetActivity extends AppCompatActivity {
 
         // set current tweet content to EditText
         editTweetText.setText(tweetContent);
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view)  {
+                // Start MainActivity when the button is clicked
+                Intent intent = new Intent(EditTweetActivity.this, Home.class);
+                startActivity(intent);
+                finish(); // Optional: Call finish() if you want to remove the current activity from the back stack
+            }
+        });
 
         saveButton.setOnClickListener(v -> {
             String updatedTweet = editTweetText.getText().toString().trim();

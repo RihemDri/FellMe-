@@ -64,7 +64,7 @@ public class RegisterActivity extends AppCompatActivity {
         editTextRegisterEmail = findViewById(R.id.editText_register_email);
         editTextRegisterDoB = findViewById(R.id.editText_register_dob);
         editTextRegisterPwd = findViewById(R.id.editText_register_password);
-        editTextRegisterActivity = findViewById(R.id.editText_register_activity);
+        //  editTextRegisterActivity = findViewById(R.id.editText_register_activity);
 
 
 
@@ -90,6 +90,7 @@ public class RegisterActivity extends AppCompatActivity {
         //setting up date picker on edittext
         editTextRegisterDoB.setOnClickListener(new View.OnClickListener() {
             @Override
+            //Calendar abstract class
             public void onClick(View v) {
                 final Calendar calendar =Calendar.getInstance();
                 int day = calendar.get(Calendar.DAY_OF_MONTH);
@@ -197,14 +198,6 @@ public class RegisterActivity extends AppCompatActivity {
                     //clear the entered password taa kbal
                     editTextValidPwd.clearComposingText();
                     editTextRegisterPwd.clearComposingText();
-
-
-
-
-
-
-
-
                 } else {
                     textGender = radioButtonRegisterGenderSelected.getText().toString();
                     progressBar.setVisibility(View.VISIBLE);
@@ -219,14 +212,6 @@ public class RegisterActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-
-
-
-
-
-
-
 
     }
 
@@ -282,15 +267,6 @@ public class RegisterActivity extends AppCompatActivity {
 
 
                             });
-
-
-
-
-
-
-
-
-
                         } else {
                             try {
                                 throw task.getException();

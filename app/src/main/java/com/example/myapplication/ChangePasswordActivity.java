@@ -67,16 +67,16 @@ public class ChangePasswordActivity extends AppCompatActivity {
             Intent intent = new Intent(ChangePasswordActivity.this,UserProfileActivity.class);
             startActivity(intent);
             finish();
-         }else {
+        }else {
             reAuthenticate(firebaseUser);
 
-         }
+        }
 
 
     }
 
-          private void reAuthenticate(FirebaseUser firebaseUser) {
-            buttonReAuth.setOnClickListener(new View.OnClickListener() {
+    private void reAuthenticate(FirebaseUser firebaseUser) {
+        buttonReAuth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 userPwdCurr = editTextPwdCurr.getText().toString();
@@ -105,7 +105,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
 
 
                                 textViewAuth.setText("you are authentificated/verified" +
-                                " You can Change password now ");
+                                        " You can Change password now ");
                                 Toast.makeText(ChangePasswordActivity.this, "Password has been verified " + "  Change password now ", Toast.LENGTH_SHORT).show();
                                 //change color of update email button
                                 buttonChangePwd.setBackgroundTintList((ContextCompat.getColorStateList(ChangePasswordActivity.this,
@@ -114,7 +114,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
                                     @Override
                                     public void onClick(View v) {
                                         changePwd (firebaseUser);
-                                        
+
                                     }
                                 });
 
@@ -218,10 +218,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
             Intent intent = new Intent(ChangePasswordActivity.this,UpdateProfileActivity.class);
             startActivity(intent);
             finish();
-        } else if (id ==R.id.menu_update_email) {
-            Intent intent = new Intent(ChangePasswordActivity.this,UpdateEmailActivity.class);
-            startActivity(intent);
-            finish();
+
         }else if (id ==R.id.menu_change_password) {
             Intent intent = new Intent(ChangePasswordActivity.this,ChangePasswordActivity.class);
             startActivity(intent);

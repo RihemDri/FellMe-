@@ -46,7 +46,7 @@ public class Home extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         getSupportActionBar().setTitle("Home");
-       // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         addTweet = findViewById(R.id.addTweet);
         progress = findViewById(R.id.progress);
@@ -131,10 +131,7 @@ public class Home extends AppCompatActivity {
             Intent intent = new Intent(Home.this,UpdateProfileActivity.class);
             startActivity(intent);
             finish();
-        } else if (id ==R.id.menu_update_email) {
-            Intent intent = new Intent(Home.this,UpdateEmailActivity.class);
-            startActivity(intent);
-            finish();
+
         }else if (id ==R.id.menu_change_password) {
             Intent intent = new Intent(Home.this,ChangePasswordActivity.class);
             startActivity(intent);

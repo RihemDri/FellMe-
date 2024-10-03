@@ -37,6 +37,7 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHolder> {
@@ -50,6 +51,8 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
 
     public void updateTweets(List<Tweet> newTweets) {
         this.tweetList = newTweets;
+        // Reverse the order of the tweet lists
+        Collections.reverse(this.tweetList);
         notifyDataSetChanged(); // Notify the adapter that data has changed
     }
 
@@ -168,8 +171,8 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
 
 
 
-       // holder.predictionResultTextView.setText(tweet.getPredictionResult());
-       // holder.modelConfidenceTextView.setText(tweet.getModelConfidence());
+        // holder.predictionResultTextView.setText(tweet.getPredictionResult());
+        // holder.modelConfidenceTextView.setText(tweet.getModelConfidence());
 
 /*        // Handle image visibility if needed
         if (tweet.getImage().isEmpty()) {
@@ -198,10 +201,10 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         holder.show_comment.setOnClickListener(v -> {
             if (holder.commentsContainer.getVisibility() == View.VISIBLE) {
                 holder.commentsContainer.setVisibility(View.GONE);
-               //c holder.expandCollapseButton.setText("Show Comments");
+                //c holder.expandCollapseButton.setText("Show Comments");
             } else {
                 holder.commentsContainer.setVisibility(View.VISIBLE);
-               // holder.expandCollapseButton.setText("Hide Comments");
+                // holder.expandCollapseButton.setText("Hide Comments");
             }
         });
 
@@ -218,34 +221,34 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
             if (userId.equals(tweet.getUserId())) {
 
                 PopupMenu popupMenu = new PopupMenu(context, v);
-            popupMenu.getMenuInflater().inflate(R.menu.tweet_edit, popupMenu.getMenu());
+                popupMenu.getMenuInflater().inflate(R.menu.tweet_edit, popupMenu.getMenu());
 
-            popupMenu.setOnMenuItemClickListener(item -> {
-                int itemId = item.getItemId();
-                if (itemId == R.id.edit_text_id) {
-                    // Handle Edit action
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    int itemId = item.getItemId();
+                    if (itemId == R.id.edit_text_id) {
+                        // Handle Edit action
 
-                    Intent intent = new Intent(context, EditTweetActivity.class);
-                    intent.putExtra("tweet_id", tweet.getId());
-                    intent.putExtra("tweet", tweet.getTweet());
-                    context.startActivity(intent);
+                        Intent intent = new Intent(context, EditTweetActivity.class);
+                        intent.putExtra("tweet_id", tweet.getId());
+                        intent.putExtra("tweet", tweet.getTweet());
+                        context.startActivity(intent);
 
-                    Toast.makeText(context, "Edit Post clicked", Toast.LENGTH_SHORT).show();
-                    return true;
-                } else if (itemId == R.id.delete_tweet) {
-                    // Handle Delete action
-                    Toast.makeText(context, "Delete Post clicked", Toast.LENGTH_SHORT).show();
-                    deleteTweet(tweet.getId(), position);
-                    return true;
-                } else {
-                    return false;
-                }
-            });
+                        Toast.makeText(context, "Edit Post clicked", Toast.LENGTH_SHORT).show();
+                        return true;
+                    } else if (itemId == R.id.delete_tweet) {
+                        // Handle Delete action
+                        Toast.makeText(context, "Delete Post clicked", Toast.LENGTH_SHORT).show();
+                        deleteTweet(tweet.getId(), position);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
 
-            popupMenu.show();
-        } else {
-            Toast.makeText(context, "You can't edit or delete others' posts", Toast.LENGTH_SHORT).show();
-        }
+                popupMenu.show();
+            } else {
+                Toast.makeText(context, "You can't edit or delete others' posts", Toast.LENGTH_SHORT).show();
+            }
         });
         ////////////////like
         try {
@@ -260,7 +263,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         }
         holder.likeButton.setOnClickListener(v -> {
             holder.likeProgressBar.setVisibility(View.VISIBLE);
-           List<String> valuesList = new ArrayList<>();
+            List<String> valuesList = new ArrayList<>();
             DatabaseReference CommentsHolder = FirebaseDatabase
                     .getInstance()
                     .getReference("Tweets")
@@ -390,7 +393,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
             //tweetImage = itemView.findViewById(R.id.tweetImage);
             dateTime = itemView.findViewById(R.id.dateTime);
             commentsContainer = itemView.findViewById(R.id.commentsContainer);
-           // replyButton = itemView.findViewById(R.id.replyButton);
+            // replyButton = itemView.findViewById(R.id.replyButton);
             //expandCollapseButton = itemView.findViewById(R.id.expandCollapseButton);
             initials = itemView.findViewById(R.id.initials);
             profilePic = itemView.findViewById(R.id.profilePic);

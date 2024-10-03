@@ -40,7 +40,7 @@
         </provider>
 
         <activity android:name=".ChangePasswordActivity"
-                  android:parentActivityName=".Home"
+            android:parentActivityName=".Home"
             >
         </activity>
         <activity
@@ -58,11 +58,10 @@
         <activity
             android:name=".UpdateProfileActivity"
             android:exported="false"
-            android:theme="@style/Theme.MyApplication">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Home" />
-        </activity>
+            android:theme="@style/Theme.MyApplication"
+            android:windowSoftInputMode="adjustResize"/>
+
+
         <activity
             android:name=".UploadProfilePicActivity"
             android:exported="false">
@@ -78,7 +77,8 @@
         </activity>
         <activity
             android:name=".Home"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".LoginActivity"
             android:exported="false"
@@ -86,17 +86,25 @@
         <activity
             android:name=".RegisterActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+
+
+
         <activity
             android:name=".TweetActivity"
             android:exported="false"

@@ -42,6 +42,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.EntryXComparator;
@@ -88,6 +89,8 @@ public class AdminActivity extends AppCompatActivity {
     FrameLayout wordCloud;
     HalfGauge gauge;
 
+    PieChart femalePieChart;
+    PieChart malePieChart;
 
 
     // Firebase
@@ -107,8 +110,7 @@ public class AdminActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin);
 
         getSupportActionBar().setTitle("Admin Dashbord");
-        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
+      //  getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
         genderPieChart = findViewById(R.id.genderPieChart);
@@ -131,15 +133,11 @@ public class AdminActivity extends AppCompatActivity {
         //gaugePieChart = findViewById(R.id.gaugepieChart);
         gauge = findViewById(R.id.halfGauge);
 
-
-
-
-
+        femalePieChart = findViewById(R.id.femalePieChart);
+        malePieChart = findViewById(R.id.maleSentimentChart);
 
 
         databaseReference = FirebaseDatabase.getInstance().getReference("tweets");
-
-
 
 
         loadUserData();
@@ -148,6 +146,9 @@ public class AdminActivity extends AppCompatActivity {
         getUsersList();
 
         loadDepartmentSentimentData();
+        loadGenderSentimentData();
+        //loadPiechartfemaleData();
+        //loadPiechartmaleData();
 
         progress.setVisibility(View.INVISIBLE);
         fetchSentimentData();
@@ -161,7 +162,7 @@ public class AdminActivity extends AppCompatActivity {
                 for (DataSnapshot snapshot : task.getResult().getChildren()) {
                     User value = snapshot.getValue(User.class); // Value of the child
                     String key = snapshot.getKey();
-                    userIds.put(key,value);
+                    userIds.put(key, value);
                 }
 
                 DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
@@ -254,7 +255,7 @@ public class AdminActivity extends AppCompatActivity {
 
 
             } else {
-                Toast.makeText(AdminActivity.this, "Failed to get Users" + task.getException().getMessage() ,Toast.LENGTH_LONG).show();
+                Toast.makeText(AdminActivity.this, "Failed to get Users" + task.getException().getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -294,8 +295,8 @@ public class AdminActivity extends AppCompatActivity {
                     tweets.add(value);
                     System.out.println(value);
 
-                    String time =tweetSnapshot.child("time").getValue(String.class);
-                    String date =tweetSnapshot.child("date").getValue(String.class);
+                    String time = tweetSnapshot.child("time").getValue(String.class);
+                    String date = tweetSnapshot.child("date").getValue(String.class);
 
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -362,8 +363,8 @@ public class AdminActivity extends AppCompatActivity {
 
         wordCloudView.setParagraph(
                 "Add some text you'd like to see a word cloud of here",
-                 10,
-                 false
+                10,
+                false
         );
 
         List<String> words = new ArrayList<>();
@@ -473,7 +474,7 @@ public class AdminActivity extends AppCompatActivity {
     private static float sentimentToValue(String sentiment) {
         switch (sentiment) {
             case "Very Positive":
-                return  4;
+                return 4;
             case "Positive":
                 return 3;
             case "Neutral":
@@ -496,7 +497,7 @@ public class AdminActivity extends AppCompatActivity {
             }
             switch ((int) value) {
                 case 4:
-                    return  "Very Positive";
+                    return "Very Positive";
                 case 3:
                     return "Positive";
                 case 2:
@@ -524,7 +525,7 @@ public class AdminActivity extends AppCompatActivity {
                 float x = date.getTime(); // Use timestamp as X value
                 float y = sentimentToValue(tweet.getPredictionResult());
 
-                System.out.println("sentimentLineChart "+ x + " " + y);
+                System.out.println("sentimentLineChart " + x + " " + y);
 
                 // Check if the sentiment value is valid
                 if (!Float.isNaN(y)) {
@@ -557,11 +558,11 @@ public class AdminActivity extends AppCompatActivity {
                 return "Very Positive";
             } else if (value == 3) {
                 return "Positive";
-            }else if (value == 2) {
+            } else if (value == 2) {
                 return "Neutral";
             } else if (value == 1) {
                 return "Negative";
-            }else if (value == 0) {
+            } else if (value == 0) {
                 return "Very Negative";
             }
             return super.getFormattedValue(value);
@@ -576,7 +577,7 @@ public class AdminActivity extends AppCompatActivity {
         int neutralCount = 0;
 
         for (Tweet tweet : tweets) {
-            if(tweet.getPredictionResult().equals("Very Positive")) {
+            if (tweet.getPredictionResult().equals("Very Positive")) {
                 veryPositiveCount++;
             } else if (tweet.getPredictionResult().equals("Positive")) {
                 positiveCount++;
@@ -594,8 +595,8 @@ public class AdminActivity extends AppCompatActivity {
         int totalCount = positiveCount + negativeCount + neutralCount + veryPositiveCount + veryNegativeCount;
 
         // Determine which sentiment has the most values
-        String mostSentiment = findMostSentiment(veryPositiveCount, positiveCount,neutralCount ,negativeCount, veryNegativeCount );
-        int mostCount = getMostCount(veryPositiveCount,positiveCount,neutralCount, negativeCount, veryNegativeCount);
+        String mostSentiment = findMostSentiment(veryPositiveCount, positiveCount, neutralCount, negativeCount, veryNegativeCount);
+        int mostCount = getMostCount(veryPositiveCount, positiveCount, neutralCount, negativeCount, veryNegativeCount);
 
         // Format the output
         String result = String.format("%d out of %d sentiments are %s", mostCount, totalCount, mostSentiment);
@@ -703,8 +704,6 @@ public class AdminActivity extends AppCompatActivity {
     }
 
 
-
-
     //////////////   ///////////////////////////////////////////////////////////////////////////////////
     //creating ActionBar Menutweets
 
@@ -714,50 +713,48 @@ public class AdminActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.common_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
+
     //when any menu item is selected
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id =item.getItemId();if (id == android.R.id.home){
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
             NavUtils.navigateUpFromSameTask(AdminActivity.this);
-        }else if  (id == R.id.menu_refresh){
+        } else if (id == R.id.menu_refresh) {
             //Refresh Activity
             startActivity(getIntent());
             finish();
-            overridePendingTransition(0,0);
-
-        } else if (id == R.id.my_profile){
+            overridePendingTransition(0, 0);
+        }else if (id == R.id.my_profile) {
             Intent intent = new Intent(AdminActivity.this, UserProfileActivity.class);
             startActivity(intent);
             finish();
-        }
-        else if (id == R.id.menu_update_profile){
-            Intent intent = new Intent(AdminActivity.this,UpdateProfileActivity.class);
+
+        }else if (id == R.id.menu_update_profile) {
+            Intent intent = new Intent(AdminActivity.this, UpdateProfileActivity.class);
             startActivity(intent);
             finish();
-        } else if (id ==R.id.menu_update_email) {
-            Intent intent = new Intent(AdminActivity.this,UpdateEmailActivity.class);
-            startActivity(intent);
-            finish();
-        }else if (id ==R.id.menu_change_password) {
-            Intent intent = new Intent(AdminActivity.this,ChangePasswordActivity.class);
+
+        } else if (id == R.id.menu_change_password) {
+            Intent intent = new Intent(AdminActivity.this, ChangePasswordActivity.class);
             startActivity(intent);
         } else if (id == R.id.menu_delete_profile) {
-            Intent intent = new Intent(AdminActivity.this,DeleteActivity.class);
+            Intent intent = new Intent(AdminActivity.this, DeleteActivity.class);
             startActivity(intent);
             finish();
         } else if (id == R.id.menu_logout) {
             auth.signOut();
-            Toast.makeText(AdminActivity.this,"Logged Out",Toast.LENGTH_LONG).show();
-            Intent intent = new Intent(AdminActivity.this,MainActivity.class);
+            Toast.makeText(AdminActivity.this, "Logged Out", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(AdminActivity.this, MainActivity.class);
 
             //clear
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
-                    Intent.FLAG_ACTIVITY_CLEAR_TASK |Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();//close user profile Activity
 
-        }else {
-            Toast.makeText(AdminActivity.this,"Something went wrong ",Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(AdminActivity.this, "Something went wrong ", Toast.LENGTH_LONG).show();
 
 
         }
@@ -772,7 +769,7 @@ public class AdminActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = auth.getCurrentUser();
 
-        if (firebaseUser == null ){
+        if (firebaseUser == null) {
             Toast.makeText(AdminActivity.this, "Something went wrong! User details are not available at the moment !  ", Toast.LENGTH_LONG).show();
             Intent intent = new Intent(AdminActivity.this, LoginActivity.class);
             startActivity(intent);
@@ -792,11 +789,10 @@ public class AdminActivity extends AppCompatActivity {
                 setupGenderPieChart(genderPieChart, users);
                 setupPositionBarChart(positionBarChart, users);
             } else {
-                Toast.makeText(AdminActivity.this, "Failed to get tweets" + task.getException().getMessage() ,Toast.LENGTH_LONG).show();
+                Toast.makeText(AdminActivity.this, "Failed to get tweets" + task.getException().getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
-
     public void setupPositionBarChart(PieChart pieChart, List<User> users) {
         Map<String, Integer> positionCountMap = new HashMap<>();
 
@@ -815,7 +811,7 @@ public class AdminActivity extends AppCompatActivity {
             }
         }
 
-        System.out.println("positionCountmap "+ positionCountMap);
+        System.out.println("positionCountmap " + positionCountMap);
 
         List<PieEntry> entries = new ArrayList<>();
 
@@ -824,18 +820,29 @@ public class AdminActivity extends AppCompatActivity {
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(ColorTemplate.MATERIAL_COLORS); // You can customize the colors
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
 
-        dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(14);
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueTextSize(10);
         dataSet.setValueFormatter(new RoundedValueFormatter());
 
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
+
         Description desc = new Description();
         desc.setText("Work Positions");
         pieChart.setDescription(desc);
+        // Customize the size of the chart
+        pieChart.setEntryLabelColor(Color.BLACK); // Set department titles (entry labels) to black
+        pieChart.setHoleRadius(20f); // Adjust this value to increase/decrease the size of the center hole
+        pieChart.setTransparentCircleRadius(15f); // Adjust the transparent circle radius
+
+        // Disable the legend
+        pieChart.getLegend().setEnabled(false);
+
+
+
         pieChart.invalidate(); // refresh
     }
 
@@ -870,8 +877,9 @@ public class AdminActivity extends AppCompatActivity {
         pieChart.setDrawEntryLabels(false);
         pieChart.invalidate(); // refresh
     }
-    private void loadSentimentData(){
-        DatabaseReference sentimentRef = FirebaseDatabase.getInstance().getReference("predictionResult" );
+
+    private void loadSentimentData() {
+        DatabaseReference sentimentRef = FirebaseDatabase.getInstance().getReference("predictionResult");
         sentimentRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -902,6 +910,7 @@ public class AdminActivity extends AppCompatActivity {
             }
         });
     }
+
     private void setupSentimentPieChart(PieChart pieChart, int positiveCount, int negativeCount, int neutralCount) {
         List<PieEntry> entries = new ArrayList<>();
         entries.add(new PieEntry(positiveCount, "Positive"));
@@ -947,6 +956,7 @@ public class AdminActivity extends AppCompatActivity {
         endOfMonth.add(Calendar.DAY_OF_MONTH, -1);
         return endOfMonth;
     }
+
     private void setupPieChart() {
         gaugePieChart.setRotationAngle(0);
         gaugePieChart.setMaxAngle(360f);  // Display half of the pie chart
@@ -968,8 +978,6 @@ public class AdminActivity extends AppCompatActivity {
                 int negativeCount = 0;
                 int veryNegativeCount = 0;
                 int totalCount = 0;
-
-
 
 
                 // Iterate through all tweets in the database
@@ -1039,7 +1047,7 @@ public class AdminActivity extends AppCompatActivity {
         gaugePieChart.invalidate();  // Refresh the chart
         Log.i("test", data.toString());
 
-}
+    }
 
     private void updateGauge(float veryPositivePercent, float positivePercent, float neutralPercent, float negativePercent, float veryNegativePercent) {
         List<PieEntry> entries = new ArrayList<>();
@@ -1102,8 +1110,154 @@ public class AdminActivity extends AppCompatActivity {
         gauge.setValue(cumulative - max);
 
     }
+
+    private void loadGenderSentimentData() {
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("Users");
+        usersRef.get().addOnCompleteListener(task -> {
+            HashMap<String, User> userIds = new HashMap<>();
+            if (task.isSuccessful()) {
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    User value = snapshot.getValue(User.class); // Value of the child
+                    String key = snapshot.getKey();
+                    userIds.put(key, value);
+                }
+
+                DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
+                tweetRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<Tweet> tweets = new ArrayList<>();
+
+                        for (DataSnapshot tweetSnapshot : snapshot.getChildren()) {
+                            Tweet value = tweetSnapshot.getValue(Tweet.class); // Value of the child
+                            tweets.add(value);
+                        }
+
+                        // Group tweets by userId and count prediction results
+                        Map<String, Map<String, Long>> userPredictionCounts = tweets.stream()
+                                .collect(Collectors.groupingBy(Tweet::getUserId, Collectors.groupingBy(Tweet::getPredictionResult, Collectors.counting())));
+
+                        // Group prediction counts by gender
+                        Map<String, Map<String, Long>> genderPredictionCounts = new HashMap<>();
+                        for (Map.Entry<String, Map<String, Long>> entry : userPredictionCounts.entrySet()) {
+                            String userId = entry.getKey();
+                            Map<String, Long> predictions = entry.getValue();
+
+                            User user = userIds.get(userId);
+
+                            if (user != null) {
+                                String gender = user.getGender(); // Assuming getGender() returns "Male", "Female", etc.
+
+                                genderPredictionCounts.putIfAbsent(gender, new HashMap<>());
+                                Map<String, Long> genderPredictions = genderPredictionCounts.get(gender);
+
+                                for (Map.Entry<String, Long> predictionEntry : predictions.entrySet()) {
+                                    genderPredictions.merge(predictionEntry.getKey(), predictionEntry.getValue(), Long::sum);
+                                }
+                            }
+                        }
+
+                        // Separate data for female and male users
+                        Map<String, Long> femalePredictions = genderPredictionCounts.get("Female");
+                        Map<String, Long> malePredictions = genderPredictionCounts.get("Male");
+
+                        if (femalePredictions != null) {
+                            loadPieChart(femalePredictions, femalePieChart, "Female");
+                        }
+
+                        if (malePredictions != null) {
+                            loadPieChart(malePredictions, malePieChart, "Male");
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        // Handle errors
+                        Toast.makeText(AdminActivity.this, "Error:" + error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            } else {
+                Toast.makeText(AdminActivity.this, "Failed to get Users:" + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void loadPieChart(Map<String, Long> predictionMap, PieChart pieChart, String gender) {
+        // Ensure PieChart is not null before proceeding
+        if (pieChart == null) {
+            Log.e("PieChartError", gender + " PieChart is null");
+            return;
+        }
+
+        long totalTweets = predictionMap.values().stream().mapToLong(Long::longValue).sum();
+
+        // Prepare pie chart entries
+        List<PieEntry> pieEntries = new ArrayList<>();
+        pieEntries.add(new PieEntry(predictionMap.getOrDefault("Very Positive", 0L) * 100f / totalTweets, "Very Positive"));
+        pieEntries.add(new PieEntry(predictionMap.getOrDefault("Positive", 0L) * 100f / totalTweets, "Positive"));
+        pieEntries.add(new PieEntry(predictionMap.getOrDefault("Neutral", 0L) * 100f / totalTweets, "Neutral"));
+        pieEntries.add(new PieEntry(predictionMap.getOrDefault("Negative", 0L) * 100f / totalTweets, "Negative"));
+        pieEntries.add(new PieEntry(predictionMap.getOrDefault("Very Negative", 0L) * 100f / totalTweets, "Very Negative"));
+
+        PieDataSet dataSet = new PieDataSet(pieEntries, "Sentiment for " + gender);
+
+        // Set colors for each sentiment
+        if (gender.equals("Male")) {
+            dataSet.setColors(new int[]{
+                    Color.parseColor("#7ae582"), // Custom color for Male - Very Positive
+                    Color.parseColor("#25a18e"), // Custom color for Male - Positive
+                    Color.parseColor("#9fffcb"), // Custom color for Male - Neutral
+                    Color.parseColor("#00a5cf"), // Custom color for Male - Negative
+                    Color.parseColor("#004e64")  // Custom color for Male - Very Negative
+            });
+        } else if (gender.equals("Female")) {
+            dataSet.setColors(new int[]{
+                    Color.parseColor("#ffc2d4"), // Very Positive - Green
+                    Color.parseColor("#ff7aa2"), // Positive - Light Green
+                    Color.parseColor("#ffe0e9"), // Neutral - Yellow
+                    Color.parseColor("#8a2846"), // Negative - Orange
+                    Color.parseColor("#602437")  // Very Negative - Red
+            });
+        }
+        dataSet.setSliceSpace(2f);
+        dataSet.setSelectionShift(5f);
+
+// Set PieChart data
+        pieChart.setUsePercentValues(true);
+        pieChart.setDrawEntryLabels(false); // Remove labels from slices
+
+        PieData data = new PieData(dataSet);
+        data.setValueFormatter(new PercentFormatter());
+        data.setValueTextSize(12f); // Set text size
+        data.setValueFormatter(new PercentFormatter(pieChart)); // Attach PercentFormatter
+        data.setValueTextColor(Color.BLACK); // Set text color
+
+        pieChart.setData(data);
+        pieChart.invalidate(); // Refresh the chart
+
+// Customize the pie chart appearance
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawHoleEnabled(false);
+        pieChart.setRotationEnabled(true);
+        pieChart.setHighlightPerTapEnabled(true);
+
+ /*
+ // Customize Legend
+       Legend legend = pieChart.getLegend();
+        legend.setForm(Legend.LegendForm.CIRCLE); // Shape of the legend entries
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM); // Align the legend to the bottom
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER); // Center align the legend horizontally
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL); // Make the legend horizontal (single line)
+        legend.setDrawInside(false); // Position the legend outside of the chart
+        legend.setWordWrapEnabled(true); // Enable word wrapping
+        legend.setTextSize(14f); // Set text size for legend entries
+        legend.setYOffset(10f); // Add padding to the Y-axis of the legend (optional for better layout)*/
+
+// Refresh the chart
+        pieChart.invalidate(); // Refresh to apply all changes
+
+
+    }
 }
-
-
-
-

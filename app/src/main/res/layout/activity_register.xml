@@ -72,7 +72,7 @@
                         android:layout_marginLeft="10dp"
                         android:layout_marginRight="10dp"
                         android:src="@drawable/ic_profile"
-                         />
+                        />
 
                     <TextView
                         android:id="@+id/textView_register_full_name"
@@ -134,7 +134,7 @@
                         android:layout_marginLeft="10dp"
                         android:layout_marginRight="10dp"
                         android:src="@drawable/ic_email"
-                         />
+                        />
 
                     <TextView
                         android:id="@+id/textView_register_email"
@@ -212,6 +212,7 @@
                         android:background="@android:color/transparent"
                         android:hint="select your dob"
                         android:inputType="date"
+                        android:focusable="false"
                         android:padding="6dp"
                         android:textSize="16sp" />
 
@@ -222,7 +223,7 @@
                         android:layout_below="@id/textView_register_dob"
                         android:layout_marginTop="10dp"
                         android:layout_marginBottom="10dp"
-                         android:layout_toEndOf="@id/editText_register_dob"
+                        android:layout_toEndOf="@id/editText_register_dob"
                         android:src="@drawable/ic_calendar"
                         />
                 </RelativeLayout>
@@ -325,25 +326,13 @@
                         android:layout_centerHorizontal="true"
                         android:background="@android:color/darker_gray" />
 
-                    <EditText
-                        android:id="@+id/editText_register_activity"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/textView_register_activity"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="10dp"
-                        android:layout_toEndOf="@id/imageViewActivity"
-                        android:background="@android:color/transparent"
-                        android:hint="enter your activity"
-                        android:padding="6dp"
-                        android:textSize="16sp" />
                     <Spinner
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:id="@+id/spinner_departement"
                         android:layout_marginTop="20dp"
                         android:layout_marginBottom="10dp"
-                        android:layout_below="@+id/editText_register_activity"
+                        android:layout_below="@+id/divider_mobile"
                         android:layout_toEndOf="@+id/imageViewActivity"
                         android:background="@android:color/transparent"/>
                 </RelativeLayout>

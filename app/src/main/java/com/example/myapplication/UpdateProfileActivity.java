@@ -40,6 +40,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
     private String textFullName , textDoB , textGender , textActiviy;
     private FirebaseAuth auth ;
     private ProgressBar progressBar;
+    TextView loginRedirectupload;
 
 
     @Override
@@ -87,6 +88,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
         editTextUpdateActivity =findViewById(R.id.editText_update_profile_activity);
 
         radioGroupUpdateGender = findViewById(R.id.radio_group_update_profile_gender);
+        loginRedirectupload = findViewById(R.id.textView_profile_upload_pic);
 
         auth =FirebaseAuth.getInstance();
         FirebaseUser firebaseUser =auth.getCurrentUser();
@@ -104,18 +106,25 @@ public class UpdateProfileActivity extends AppCompatActivity {
                 finish();
             }
         });
+        loginRedirectupload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(UpdateProfileActivity.this, UploadProfilePicActivity.class);
+                startActivity(intent);
+            }
+        });
 
 
 
         //Update Email
-       TextView buttonUpdateEmail  = findViewById(R.id.textView_profile_update_email);
+        TextView buttonUpdateEmail  = findViewById(R.id.textView_profile_update_email);
         buttonUpdateEmail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(UpdateProfileActivity.this, UpdateEmailActivity.class);
                 startActivity(intent);
                 finish();
-                    }
+            }
         });
 
         //change DOB
@@ -231,6 +240,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
     }
     //fetch data from Firebase and display
 
+
     private void showProfile(FirebaseUser firebaseUser) {
         String userIDofRegistered = firebaseUser.getUid();
 
@@ -335,10 +345,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
             Intent intent = new Intent(UpdateProfileActivity.this,UpdateProfileActivity.class);
             startActivity(intent);
             finish();
-        } else if (id ==R.id.menu_update_email) {
-            Intent intent = new Intent(UpdateProfileActivity.this,UpdateEmailActivity.class);
-            startActivity(intent);
-            finish();
+
         }else if (id ==R.id.menu_change_password) {
             Intent intent = new Intent(UpdateProfileActivity.this,ChangePasswordActivity.class);
             startActivity(intent);

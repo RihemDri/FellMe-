@@ -51,9 +51,7 @@ public class UploadProfilePicActivity extends AppCompatActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-         }
-
-
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -74,6 +72,7 @@ public class UploadProfilePicActivity extends AppCompatActivity {
         storageReference = FirebaseStorage.getInstance().getReference("DisplayPics");
 
         //use to identifie ressource vidio sound ..
+        //uniform resource identifier URI  URL(locator) is subset of uri
 
         Uri uri  = firebaseUser.getPhotoUrl();
 
@@ -105,6 +104,7 @@ public class UploadProfilePicActivity extends AppCompatActivity {
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(intent, PICK_IMAGE_REQUEST);
+        //PICK_IMAGE_REQUEST global variable
 
 
     }
@@ -113,8 +113,8 @@ public class UploadProfilePicActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-        uriImage = data.getData();
-        imageViewUploadPic.setImageURI(uriImage);
+            uriImage = data.getData();
+            imageViewUploadPic.setImageURI(uriImage);
 
 
         }
@@ -126,7 +126,7 @@ public class UploadProfilePicActivity extends AppCompatActivity {
         {
             ///save the image with uid of the currently logged user
             StorageReference fileReference = storageReference.child(auth.getCurrentUser().getUid() + "."
-            + getFileExtension(uriImage));
+                    + getFileExtension(uriImage));
             //upload image to storage
             fileReference.putFile(uriImage).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
@@ -171,8 +171,9 @@ public class UploadProfilePicActivity extends AppCompatActivity {
     ///get file extension of the image
     private String getFileExtension(Uri uri ){
         ContentResolver cR = getContentResolver();
-        MimeTypeMap mime =MimeTypeMap.getSingleton();
+        MimeTypeMap mime =MimeTypeMap.getSingleton();// MIME est une façon standard de décrire le format d'un fichier.
         return mime.getExtensionFromMimeType(cR.getType(uri));
+        //convert ce type MIME en extension de fichier (comme "jpg" pour une image JPEG..).
     }
 
 
@@ -210,10 +211,7 @@ public class UploadProfilePicActivity extends AppCompatActivity {
             Intent intent = new Intent(UploadProfilePicActivity.this,UpdateProfileActivity.class);
             startActivity(intent);
             finish();
-        } else if (id ==R.id.menu_update_email) {
-            Intent intent = new Intent(UploadProfilePicActivity.this,UpdateEmailActivity.class);
-            startActivity(intent);
-            finish();
+
 
         }else if (id ==R.id.menu_change_password) {
             Intent intent = new Intent(UploadProfilePicActivity.this,ChangePasswordActivity.class);

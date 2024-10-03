@@ -13,14 +13,13 @@
     <item android:title="Refresh"
         android:icon="@drawable/ic_refresh"
         android:alphabeticShortcut="r"
-         android:id="@+id/menu_refresh"
-         app:actionViewClass="androidx.appcompat.widget.SearchView"/>
+        android:id="@+id/menu_refresh"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"/>
     <item android:title="My Profile "
         android:id="@+id/my_profile"/>
     <item android:title="Update Profile"
         android:id="@+id/menu_update_profile"/>
-    <item android:title="Update Email"
-        android:id="@+id/menu_update_email"/>
+
     <item android:title="change Password"
         android:id="@+id/menu_change_password"/>
     <item android:title="Delete Profile "

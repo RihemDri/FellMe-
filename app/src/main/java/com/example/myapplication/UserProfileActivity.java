@@ -38,12 +38,12 @@ public class UserProfileActivity extends AppCompatActivity {
     //TextView dateTime;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-           super.onCreate(savedInstanceState);
-           //EdgeToEdge.enable(this);
-           setContentView(R.layout.activity_user_profile);
-           //getSupportActionBar().setTitle("Home");
-           getSupportActionBar().setTitle("Profile");
-           getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        super.onCreate(savedInstanceState);
+        //EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_user_profile);
+        //getSupportActionBar().setTitle("Home");
+        getSupportActionBar().setTitle("Profile");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         swipeToRefresh();
 
@@ -56,39 +56,39 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
 
-            textViewWelcome =findViewById(R.id.textView_show_welcome);
-            textViewFirstName = findViewById(R.id.textView_show_full_name);
-            textViewEmail =findViewById(R.id.textView_show_email);
-            textViewDoB =findViewById(R.id.textView_show_dob);
-            textViewGender= findViewById(R.id.textView_show_gender);
-            textViewActivity=findViewById(R.id.textView_show_activity);
-            progressBar = findViewById(R.id.progressBar);
-             //textViewLastName = findViewById(R.id.textView_show_name1);
+        textViewWelcome =findViewById(R.id.textView_show_welcome);
+        textViewFirstName = findViewById(R.id.textView_show_full_name);
+        textViewEmail =findViewById(R.id.textView_show_email);
+        textViewDoB =findViewById(R.id.textView_show_dob);
+        textViewGender= findViewById(R.id.textView_show_gender);
+        textViewActivity=findViewById(R.id.textView_show_activity);
+        progressBar = findViewById(R.id.progressBar);
+        //textViewLastName = findViewById(R.id.textView_show_name1);
 
-            //set Onclick on Image view to open uplodprofile
-            imageView = findViewById(R.id.imageView_profile_dp);
-            imageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                  Intent intent = new Intent(UserProfileActivity.this,UploadProfilePicActivity.class);
-                  startActivity(intent);
-                }
-            });
-
-
-
-
-
-
-            auth =FirebaseAuth.getInstance();
-            FirebaseUser firebaseUser =auth.getCurrentUser();
-
-            if (firebaseUser == null ){
-                Toast.makeText(UserProfileActivity.this, "Something went wrong! User details are not available at the moment !  ", Toast.LENGTH_LONG).show();
-            }else{
-                progressBar.setVisibility(View.VISIBLE);
-                showUserProfile(firebaseUser);
+        //set Onclick on Image view to open uplodprofile
+        imageView = findViewById(R.id.imageView_profile_dp);
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(UserProfileActivity.this,UploadProfilePicActivity.class);
+                startActivity(intent);
             }
+        });
+
+
+
+
+
+
+        auth =FirebaseAuth.getInstance();
+        FirebaseUser firebaseUser =auth.getCurrentUser();
+
+        if (firebaseUser == null ){
+            Toast.makeText(UserProfileActivity.this, "Something went wrong! User details are not available at the moment !  ", Toast.LENGTH_LONG).show();
+        }else{
+            progressBar.setVisibility(View.VISIBLE);
+            showUserProfile(firebaseUser);
+        }
 
 
     }
@@ -114,12 +114,14 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
     private void showUserProfile(FirebaseUser firebaseUser) {
+        //since the fire base user not global we pass the firebase user in parammm ( )
         String userID = firebaseUser.getUid();
         //Extracting user ref from db from signup
         DatabaseReference referenceProfile = FirebaseDatabase.getInstance().getReference("Users");
         referenceProfile.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                //called each time when the data changed canceld stop listner
                 ReadwriteUserDetails readUserDetails =snapshot.getValue(ReadwriteUserDetails.class);
                 if (readUserDetails!=null){
                     name = firebaseUser.getDisplayName();
@@ -131,7 +133,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
                     textViewWelcome.setText("welcome "+ fullname + "!");
                     textViewFirstName.setText(name);
-                   // textViewLastName.setText(fullname);
+                    // textViewLastName.setText(fullname);
                     textViewEmail.setText(email);
                     textViewDoB.setText(dob);
                     textViewGender.setText(gender);
@@ -162,7 +164,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
         });
     }
- /////////////////////////////////////////////////////////////////////////////   ////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////   ////////////////////////////////////////////////////////////////
     //creating ActionBar Menu
 
     @Override
@@ -171,7 +173,7 @@ public class UserProfileActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.common_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
-//when any menu item is selected
+    //when any menu item is selected
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
@@ -201,7 +203,7 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             });
             return true;
-       }else if (id == R.id.menu_refresh){
+        }else if (id == R.id.menu_refresh){
             //Refresh Activity
             startActivity(getIntent());
             finish();
@@ -216,9 +218,7 @@ public class UserProfileActivity extends AppCompatActivity {
         }else if (id == R.id.menu_update_profile){
             Intent intent = new Intent(UserProfileActivity.this,UpdateProfileActivity.class);
             startActivity(intent);
-        }  else if (id ==R.id.menu_update_email) {
-            Intent intent = new Intent(UserProfileActivity.this,UpdateEmailActivity.class);
-            startActivity(intent);
+
         } else if (id ==R.id.menu_change_password) {
             Intent intent = new Intent(UserProfileActivity.this,ChangePasswordActivity.class);
             startActivity(intent);

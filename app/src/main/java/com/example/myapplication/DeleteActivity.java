@@ -182,10 +182,7 @@ public class DeleteActivity extends AppCompatActivity {
             Intent intent = new Intent(DeleteActivity.this, UpdateProfileActivity.class);
             startActivity(intent);
             finish();
-        } else if (id == R.id.menu_update_email) {
-            Intent intent = new Intent(DeleteActivity.this, UpdateEmailActivity.class);
-            startActivity(intent);
-            finish();
+
         } else if (id == R.id.menu_delete_profile) {
             Intent intent = new Intent(DeleteActivity.this, DeleteActivity.class);
             startActivity(intent);
