@@ -44,7 +44,6 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.EntryXComparator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -277,7 +276,7 @@ public class AdminActivity extends AppCompatActivity {
         });
     }
 
-    private void loadTweetData() {
+   /* private void loadTweetData() {
         DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
         tweetRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
@@ -321,9 +320,19 @@ public class AdminActivity extends AppCompatActivity {
                 // Find the most recent date
                 Calendar mostRecentDate = getMostRecentDate(calendars);
 
+// Subtract 30 days from the most recent date
+                mostRecentDate.add(Calendar.DAY_OF_YEAR, -30);
+
+// Now, 'mostRecentDate' represents the date 30 days before the original most recent date
+                System.out.println("Most recent date minus 30 days: " + mostRecentDate.getTime());
+
                 // Calculate the start and end of the month for the most recent date
                 Calendar startOfMonth = getStartOfMonth(mostRecentDate);
                 Calendar endOfMonth = getEndOfMonth(startOfMonth);
+               // Log.i("endOfMonth", "taaastt: " + endOfMonth.toString());
+               // Log.i("startOfMonth", "taaastt: " + startOfMonth.toString());
+
+
 
                 // Initialize the dayOfWeekCounts with all days of the week set to 0
                 Map<DayOfWeek, Integer> dayOfWeekCounts = new EnumMap<>(DayOfWeek.class);
@@ -355,7 +364,201 @@ public class AdminActivity extends AppCompatActivity {
 
             }
         });
-    }
+    }*/
+    ///this code fe one month
+  private void loadTweetData() {
+       DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
+       tweetRef.addListenerForSingleValueEvent(new ValueEventListener() {
+           @RequiresApi(api = Build.VERSION_CODES.O)
+           @Override
+           public void onDataChange(@NonNull DataSnapshot snapshot) {
+               List<Tweet> tweets = new ArrayList<>();
+
+               long tweetCount = snapshot.getChildrenCount();
+               tweetCountTextView.setText(tweetCount + " tweets");
+
+               List<Calendar> calendars = new ArrayList<>();
+
+               for (DataSnapshot tweetSnapshot : snapshot.getChildren()) {
+                   Tweet value = tweetSnapshot.getValue(Tweet.class); // Value of the child
+                   tweets.add(value);
+                   System.out.println(value);
+
+                   String time = tweetSnapshot.child("time").getValue(String.class);
+                   String date = tweetSnapshot.child("date").getValue(String.class);
+
+                   SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                   try {
+                       // Combine the date and time into one string
+                       String dateTimeString = date + " " + time;
+
+                       // Parse the combined string into a Date object
+                       Date dateTime = dateFormat.parse(dateTimeString);
+
+                       // Create a Calendar object and set the parsed Date
+                       Calendar calendar = Calendar.getInstance();
+                       calendar.setTime(dateTime);
+
+                       calendars.add(calendar);
+                       System.out.println(calendar.getTime());
+
+                   } catch (ParseException e) {
+                       e.printStackTrace();
+                   }
+               }
+               // Find the most recent date
+               Calendar mostRecentDate = getMostRecentDate(calendars);
+
+               // Calculate the start and end of the month for the most recent date
+               Calendar startOfMonth = getStartOfMonth(mostRecentDate);
+               Calendar endOfMonth = getEndOfMonth(startOfMonth);
+
+               // Initialize the dayOfWeekCounts with all days of the week set to 0
+               Map<DayOfWeek, Integer> dayOfWeekCounts = new EnumMap<>(DayOfWeek.class);
+               for (DayOfWeek day : DayOfWeek.values()) {
+                   dayOfWeekCounts.put(day, 0);
+               }
+
+               // Count occurrences of each day of the week in the last month
+               for (Calendar calendar : calendars) {
+                   if (calendar.after(startOfMonth) && calendar.before(endOfMonth)) {
+                       DayOfWeek dayOfWeek = DayOfWeek.of(calendar.get(Calendar.DAY_OF_WEEK));
+                       dayOfWeekCounts.put(dayOfWeek, dayOfWeekCounts.get(dayOfWeek) + 1);
+                   }
+               }
+
+               // Print results
+               for (Map.Entry<DayOfWeek, Integer> entry : dayOfWeekCounts.entrySet()) {
+                   System.out.println(entry.getKey().name() + ": " + entry.getValue());
+               }
+
+               setupTweetHourBarChart(tweetPerHourChart, dayOfWeekCounts);
+               calculateOverallSentiment(tweets);
+               setupSentimentLineChart(sentimentChart, tweets, calendars);
+               setupWordCloud(tweets);
+           }
+
+           @Override
+           public void onCancelled(@NonNull DatabaseError error) {
+
+           }
+       });
+   }
+
+// ki tenze yatlaa adad louta
+   /* private void loadTweetData() {
+        DatabaseReference tweetRef = FirebaseDatabase.getInstance().getReference("Tweets");
+        tweetRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Tweet> tweets = new ArrayList<>();
+                long tweetCount = snapshot.getChildrenCount();
+                tweetCountTextView.setText(tweetCount + " tweets");
+
+                List<Calendar> calendars = new ArrayList<>();
+
+                for (DataSnapshot tweetSnapshot : snapshot.getChildren()) {
+                    Tweet value = tweetSnapshot.getValue(Tweet.class);
+                    if (value != null) {
+                        tweets.add(value);
+                        String time = tweetSnapshot.child("time").getValue(String.class);
+                        String date = tweetSnapshot.child("date").getValue(String.class);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                        try {
+                            String dateTimeString = date + " " + time;
+                            Date dateTime = dateFormat.parse(dateTimeString);
+                            Calendar calendar = Calendar.getInstance();
+                            calendar.setTime(dateTime);
+                            calendars.add(calendar);
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                Calendar mostRecentDate = getMostRecentDate(calendars);
+                mostRecentDate.add(Calendar.DAY_OF_YEAR, -30);
+                Calendar startOfMonth = getStartOfMonth(mostRecentDate);
+                Calendar endOfMonth = getEndOfMonth(startOfMonth);
+
+                Map<DayOfWeek, Integer> dayOfWeekCounts = new EnumMap<>(DayOfWeek.class);
+                for (DayOfWeek day : DayOfWeek.values()) {
+                    dayOfWeekCounts.put(day, 0);
+                }
+
+                for (Calendar calendar : calendars) {
+                    if (!calendar.before(startOfMonth) && !calendar.after(endOfMonth)) {
+                        DayOfWeek dayOfWeek = DayOfWeek.of(calendar.get(Calendar.DAY_OF_WEEK));
+                        dayOfWeekCounts.put(dayOfWeek, dayOfWeekCounts.get(dayOfWeek) + 1);
+                    }
+                }
+
+                for (Map.Entry<DayOfWeek, Integer> entry : dayOfWeekCounts.entrySet()) {
+                    System.out.println(entry.getKey().name() + ": " + entry.getValue());
+                }
+
+                displayTweetCounts(dayOfWeekCounts);
+                setupTweetHourBarChart(tweetPerHourChart, dayOfWeekCounts);
+
+                tweetPerHourChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+                    @Override
+                    public void onValueSelected(Entry e, Highlight h) {
+                        int dayIndex = (int) e.getX(); // Get the index of the day from the entry
+                        DayOfWeek day = DayOfWeek.of(dayIndex + 1); // Adjust index to DayOfWeek (1 = Monday)
+                        int count = dayOfWeekCounts.get(day);
+
+                        // Display the number of tweets for that day
+                        Toast.makeText(getApplicationContext(), day.name() + ": " + count + " tweets", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onNothingSelected() {
+                        // Optional: Handle the case when no bar is selected
+                    }
+                });
+
+
+                calculateOverallSentiment(tweets);
+                setupSentimentLineChart(sentimentChart, tweets, calendars);
+                setupWordCloud(tweets);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FirebaseError", "Error fetching tweet data: " + error.getMessage());
+            }
+        });
+    }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     private void setupWordCloud(List<Tweet> tweets) {
         WordCloud wordCloudView = new WordCloud(getApplication(), null);
@@ -658,7 +861,7 @@ public class AdminActivity extends AppCompatActivity {
         Collections.reverse(entries);
 
         // Creating a dataset and assigning colors for each day
-        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts");
+        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts of last 30 day ");
         dataSet.setColors(Color.CYAN); // Set color for the bars
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
@@ -820,7 +1023,16 @@ public class AdminActivity extends AppCompatActivity {
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        // Set custom colors
+        List<Integer> colors = new ArrayList<>();
+        colors.add(Color.parseColor("#FF5733")); // Example custom color
+        colors.add(Color.parseColor("#33FF57"));
+        colors.add(Color.parseColor("#3357FF"));
+        colors.add(Color.parseColor("#F3FF33"));
+        colors.add(Color.parseColor("#33FFF9"));
+
+        dataSet.setColors(colors); // Apply custom colors to the dataset
+       // dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
 
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(10);
@@ -835,7 +1047,7 @@ public class AdminActivity extends AppCompatActivity {
         pieChart.setDescription(desc);
         // Customize the size of the chart
         pieChart.setEntryLabelColor(Color.BLACK); // Set department titles (entry labels) to black
-        pieChart.setHoleRadius(20f); // Adjust this value to increase/decrease the size of the center hole
+        pieChart.setHoleRadius(30f); // Adjust this value to increase/decrease the size of the center hole
         pieChart.setTransparentCircleRadius(15f); // Adjust the transparent circle radius
 
         // Disable the legend
