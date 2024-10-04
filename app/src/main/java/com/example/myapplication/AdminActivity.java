@@ -411,8 +411,11 @@ public class AdminActivity extends AppCompatActivity {
                Calendar mostRecentDate = getMostRecentDate(calendars);
 
                // Calculate the start and end of the month for the most recent date
-               Calendar startOfMonth = getStartOfMonth(mostRecentDate);
-               Calendar endOfMonth = getEndOfMonth(startOfMonth);
+               Calendar startOfMonth = Calendar.getInstance();
+               startOfMonth.setTime(mostRecentDate.getTime());
+               startOfMonth.add(Calendar.DAY_OF_YEAR, -30);
+
+               Calendar endOfMonth = mostRecentDate;
 
                // Initialize the dayOfWeekCounts with all days of the week set to 0
                Map<DayOfWeek, Integer> dayOfWeekCounts = new EnumMap<>(DayOfWeek.class);

@@ -52,6 +52,12 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
     public void updateTweets(List<Tweet> newTweets) {
         this.tweetList = newTweets;
         // Reverse the order of the tweet lists
+        notifyDataSetChanged(); // Notify the adapter that data has changed
+    }
+
+    public void updateTweetsAndReverse(List<Tweet> newTweets) {
+        this.tweetList = newTweets;
+        // Reverse the order of the tweet lists
         Collections.reverse(this.tweetList);
         notifyDataSetChanged(); // Notify the adapter that data has changed
     }

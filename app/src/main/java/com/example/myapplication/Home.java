@@ -91,7 +91,7 @@ public class Home extends AppCompatActivity {
                     valuesList.add(value);
                 }
                 tweets = valuesList;
-                adapter.updateTweets(tweets);
+                adapter.updateTweetsAndReverse(tweets);
                 tweetList.setVisibility(View.VISIBLE);
                 progress.setVisibility(View.INVISIBLE);
             } else {
