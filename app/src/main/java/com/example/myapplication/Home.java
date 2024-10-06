@@ -112,7 +112,7 @@ public class Home extends AppCompatActivity {
                 Log.i("Home", "Tweets: " + tweetHolderList);
 
                 tweets = tweetHolderList;
-                adapter.updateTweets(tweets);
+                adapter.updateTweetsAndRefresh(tweets);
                 tweetList.setVisibility(View.VISIBLE);
                 progress.setVisibility(View.INVISIBLE);
             }).addOnFailureListener(e -> {

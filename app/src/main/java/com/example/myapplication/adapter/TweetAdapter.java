@@ -45,7 +45,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
     }
 
     // Updated version of the updateTweets method
-    public void updateTweets(List<TweetHolder> newTweets) {
+    public void updateTweetsAndRefresh(List<TweetHolder> newTweets) {
         this.tweetList = newTweets;
         // Sort by date first, then by time in descending order
         Collections.sort(this.tweetList, (tweet1, tweet2) -> {
@@ -58,6 +58,21 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
             return tweet2.getTime().compareTo(tweet1.getTime());
         });
         notifyDataSetChanged(); // Notify the adapter that data has changed
+    }
+
+    // Updated version of the updateTweets method
+    public void updateTweets(List<TweetHolder> newTweets) {
+        this.tweetList = newTweets;
+        // Sort by date first, then by time in descending order
+        Collections.sort(this.tweetList, (tweet1, tweet2) -> {
+            // First compare dates (in descending order)
+            int dateComparison = tweet2.getDate().compareTo(tweet1.getDate());
+            if (dateComparison != 0) {
+                return dateComparison; // If dates are not equal, return the result of date comparison
+            }
+            // If dates are equal, compare times (in descending order)
+            return tweet2.getTime().compareTo(tweet1.getTime());
+        });
     }
 
     @NonNull
@@ -227,10 +242,8 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                                             holder.likeButton.setImageResource(R.drawable.ic_heart_outline);
                                             tweet.setLikedBy(valuesList);
                                             tweetList.set(position, tweet);
-                                            tweet.setLikes(tweet.getLikes() - 1);
+                                            tweet.setLikes(valuesList.size());
                                             updateTweets(tweetList);
-                                            // update like count after unliking
-                                            holder.likeCountText.setText(tweetList.get(position).getLikedBy().size()+ " likes");
                                             holder.likeProgressBar.setVisibility(View.GONE);
                                             notifyItemChanged(position);
                                         });
@@ -246,11 +259,9 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                                         .addOnCompleteListener(task2 -> {
                                             holder.likeButton.setImageResource(R.drawable.ic_heart_filled);
                                             tweet.setLikedBy(valuesList);
-                                            tweet.setLikes(tweet.getLikes()+ 1);
+                                            tweet.setLikes(valuesList.size());
                                             tweetList.set(position, tweet);
                                             updateTweets(tweetList);
-
-                                            holder.likeCountText.setText(tweetList.get(position).getLikedBy().size()+ " likes");
                                             holder.likeProgressBar.setVisibility(View.GONE);
                                             notifyItemChanged(position);
                                         });
