@@ -28,7 +28,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -88,6 +87,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         holder.tweetText.setText(tweet.getTweet());
         holder.dateTime.setText(tweet.getDate() + " " + tweet.getTime());
         holder.userNameText.setText(tweet.getUsername());
+        holder.initials.setText(tweet.getInitials());
 
         int likeCount = tweet.getLikes(); //get the number of likes
         String likeText = likeCount + (likeCount == 1? "like" : " likes");
@@ -103,25 +103,17 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         }
 
         if (!tweet.getImageUrl().isEmpty()) {
-            Picasso
-                    .with(context)
-                    .load(tweet.getImageUrl())
-                    .into(holder.profilePic, new Callback() {
-                        @Override
-                        public void onSuccess() {
-                            // Image loaded successfully
-                            holder.profilePicHolder.setVisibility(View.VISIBLE);
-                            holder.initialsHolder.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void onError() {
-                            // Handle the error
-                            Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show();
-                            holder.profilePicHolder.setVisibility(View.GONE);
-                            holder.initialsHolder.setVisibility(View.VISIBLE);
-                        }
-                    });
+            try {
+                Picasso
+                        .with(context)
+                        .load(tweet.getImageUrl())
+                        .into(holder.profilePic);
+                holder.profilePicHolder.setVisibility(View.VISIBLE);
+                holder.initialsHolder.setVisibility(View.GONE);
+            } catch( Exception e) {
+                holder.profilePicHolder.setVisibility(View.GONE);
+                holder.initialsHolder.setVisibility(View.VISIBLE);
+            }
         } else {
             // Handle the error
             holder.profilePicHolder.setVisibility(View.GONE);
