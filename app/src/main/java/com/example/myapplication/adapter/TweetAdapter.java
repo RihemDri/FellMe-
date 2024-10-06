@@ -3,6 +3,7 @@ package com.example.myapplication.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,8 @@ import com.example.myapplication.R;
 import com.example.myapplication.ReplyActivity;
 import com.example.myapplication.model.Comment;
 import com.example.myapplication.model.TweetHolder;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -37,6 +40,9 @@ import java.util.List;
 public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHolder> {
     private List<TweetHolder> tweetList;
     private Context context;
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUser firebaseUser = auth.getCurrentUser();
+    String loggedInUserId = firebaseUser.getUid();
 
     public TweetAdapter(Context context, List<TweetHolder> tweetList) {
         this.context = context;
@@ -93,7 +99,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         String likeText = likeCount + (likeCount == 1? "like" : " likes");
         holder.likeCountText.setText(likeText);
         try {
-            if (tweet.getLikedBy().contains(tweet.getTweetId())) {
+            if (tweet.getLikedBy().contains(loggedInUserId)) {
                 holder.likeButton.setImageResource(R.drawable.ic_heart_filled);
             } else {
                 holder.likeButton.setImageResource(R.drawable.ic_heart_outline);
@@ -189,17 +195,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                 Toast.makeText(context, "You can't edit or delete others' posts", Toast.LENGTH_SHORT).show();
             }
         });
-        ////////////////like
-        try {
 
-            if (tweet.getLikedBy().contains(tweet.getUserId())) {
-                holder.likeButton.setImageResource(R.drawable.ic_heart_filled);
-            } else {
-                holder.likeButton.setImageResource(R.drawable.ic_heart_outline);
-            }
-        } catch (Exception e) {
-
-        }
         holder.likeButton.setOnClickListener(v -> {
             holder.likeProgressBar.setVisibility(View.VISIBLE);
             List<String> valuesList = new ArrayList<>();
@@ -217,13 +213,13 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
 
                         valuesList.add(value);
                     }
-
-                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(tweet.getUserId());
+                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(loggedInUserId);
                     userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (valuesList.contains(tweet.getUserId())) {
-                                valuesList.remove(tweet.getUserId());
+                            Log.i("test","OnLike Clicked: " + valuesList + "loggedInUserId: " + loggedInUserId);
+                            if (valuesList.contains(loggedInUserId)) {
+                                valuesList.remove(loggedInUserId);
                                 FirebaseDatabase
                                         .getInstance()
                                         .getReference("Tweets")
@@ -240,7 +236,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                                             notifyItemChanged(position);
                                         });
                             } else {
-                                valuesList.add(tweet.getUserId());
+                                valuesList.add(loggedInUserId);
 
                                 FirebaseDatabase
                                         .getInstance()
