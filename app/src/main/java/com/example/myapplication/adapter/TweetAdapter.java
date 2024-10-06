@@ -3,7 +3,6 @@ package com.example.myapplication.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,16 +22,12 @@ import com.example.myapplication.EditTweetActivity;
 import com.example.myapplication.R;
 import com.example.myapplication.ReplyActivity;
 import com.example.myapplication.model.Comment;
-import com.example.myapplication.model.Tweet;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.myapplication.model.TweetHolder;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -41,24 +36,27 @@ import java.util.Collections;
 import java.util.List;
 
 public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHolder> {
-    private List<Tweet> tweetList;
+    private List<TweetHolder> tweetList;
     private Context context;
 
-    public TweetAdapter(Context context, List<Tweet> tweetList) {
+    public TweetAdapter(Context context, List<TweetHolder> tweetList) {
         this.context = context;
         this.tweetList = tweetList;
     }
 
-    public void updateTweets(List<Tweet> newTweets) {
+    // Updated version of the updateTweets method
+    public void updateTweets(List<TweetHolder> newTweets) {
         this.tweetList = newTweets;
-        // Reverse the order of the tweet lists
-        notifyDataSetChanged(); // Notify the adapter that data has changed
-    }
-
-    public void updateTweetsAndReverse(List<Tweet> newTweets) {
-        this.tweetList = newTweets;
-        // Reverse the order of the tweet lists
-        Collections.reverse(this.tweetList);
+        // Sort by date first, then by time in descending order
+        Collections.sort(this.tweetList, (tweet1, tweet2) -> {
+            // First compare dates (in descending order)
+            int dateComparison = tweet2.getDate().compareTo(tweet1.getDate());
+            if (dateComparison != 0) {
+                return dateComparison; // If dates are not equal, return the result of date comparison
+            }
+            // If dates are equal, compare times (in descending order)
+            return tweet2.getTime().compareTo(tweet1.getTime());
+        });
         notifyDataSetChanged(); // Notify the adapter that data has changed
     }
 
@@ -71,26 +69,16 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TweetViewHolder holder, @SuppressLint("RecyclerView") int position) {
-        Tweet tweet = tweetList.get(position);
+        TweetHolder tweet = tweetList.get(position);
         holder.tweetText.setText(tweet.getTweet());
         holder.dateTime.setText(tweet.getDate() + " " + tweet.getTime());
-        holder.userNameText.setText(tweet.getId());
-
-
-
-
-
-
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        FirebaseUser firebaseUser = auth.getCurrentUser();
-        assert firebaseUser != null;
-        String userId = firebaseUser.getUid();
+        holder.userNameText.setText(tweet.getUsername());
 
         int likeCount = tweet.getLikes(); //get the number of likes
         String likeText = likeCount + (likeCount == 1? "like" : " likes");
         holder.likeCountText.setText(likeText);
         try {
-            if (tweet.getLikedBy().contains(tweet.getId())) {
+            if (tweet.getLikedBy().contains(tweet.getTweetId())) {
                 holder.likeButton.setImageResource(R.drawable.ic_heart_filled);
             } else {
                 holder.likeButton.setImageResource(R.drawable.ic_heart_outline);
@@ -99,94 +87,32 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
 
         }
 
-
-
-
-
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(tweet.getUserId());
-
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-                if (snapshot.exists()) {
-                    // Check if fullName field exists
-                    if (snapshot.hasChild("fullName")) {
-                        // Fetch the user's name
-                        String userName = snapshot.child("fullName").getValue(String.class);
-                        holder.initials.setText(getFirstLetterUpperCased(userName));
-                        if (userName != null && !userName.isEmpty()) {
-                            holder.userNameText.setText(userName); // Set the user's name in the TextView
-                        } else {
-                            holder.userNameText.setText("No Name Found"); // Handle case where userName is null
+        if (!tweet.getImageUrl().isEmpty()) {
+            Picasso
+                    .with(context)
+                    .load(tweet.getImageUrl())
+                    .into(holder.profilePic, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            // Image loaded successfully
+                            holder.profilePicHolder.setVisibility(View.VISIBLE);
+                            holder.initialsHolder.setVisibility(View.GONE);
                         }
-                    } else {
-                        holder.userNameText.setText("Name Not Available"); // Handle missing fullName field
-                    }
-                } else {
-                    Log.e("TweetAdapter", "User data does not exist for ID:"+ tweet.getUserId());
-                    holder.userNameText.setText("Unknown User"); // Default text if user data is missing
-                }
 
-
-
-                // Reference to Firebase Storage
-                FirebaseStorage storage = FirebaseStorage.getInstance();
-
-                // Reference to the specific image
-                StorageReference imageReference = storage.getReference().child("DisplayPics/" + tweet.getUserId() + ".jpg");
-
-                // Get the download URL
-                imageReference.getDownloadUrl().addOnSuccessListener(uri -> {
-                    //ImageView setimage Uri should not be used with regular URIs so we are using picasso
-                    Picasso
-                            .with(context)
-                            .load(uri)
-                            .into(holder.profilePic, new Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    // Image loaded successfully
-                                    holder.profilePicHolder.setVisibility(View.VISIBLE);
-                                    holder.initialsHolder.setVisibility(View.GONE);
-                                }
-
-                                @Override
-                                public void onError() {
-                                    // Handle the error
-                                    Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show();
-                                    holder.profilePicHolder.setVisibility(View.GONE);
-                                    holder.initialsHolder.setVisibility(View.VISIBLE);
-                                }
-                            });
-                }).addOnFailureListener(exception -> {
-                    holder.profilePicHolder.setVisibility(View.GONE);
-                    holder.initialsHolder.setVisibility(View.VISIBLE);
-                });
-
-            }
-
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                holder.profilePicHolder.setVisibility(View.GONE);
-                holder.initialsHolder.setVisibility(View.GONE);
-                Log.e("TweetAdapter", "Database error:" + error.getMessage());
-                holder.userNameText.setText("Unknown User");
-            }
-        });
-
-
-
-        // holder.predictionResultTextView.setText(tweet.getPredictionResult());
-        // holder.modelConfidenceTextView.setText(tweet.getModelConfidence());
-
-/*        // Handle image visibility if needed
-        if (tweet.getImage().isEmpty()) {
-            holder.tweetImage.setVisibility(View.GONE);
+                        @Override
+                        public void onError() {
+                            // Handle the error
+                            Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show();
+                            holder.profilePicHolder.setVisibility(View.GONE);
+                            holder.initialsHolder.setVisibility(View.VISIBLE);
+                        }
+                    });
         } else {
-            holder.tweetImage.setVisibility(View.VISIBLE);
-            // Load image using an image loading library (e.g., Glide, Picasso)
-        }*/
+            // Handle the error
+            holder.profilePicHolder.setVisibility(View.GONE);
+            holder.initialsHolder.setVisibility(View.VISIBLE);
+        }
+
 
         // Show comments
         holder.commentsContainer.removeAllViews(); // Clear previous comments
@@ -217,14 +143,14 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         // Handle Reply Button
         holder.comment_image.setOnClickListener(v -> {
             Intent intent = new Intent(context, ReplyActivity.class);
-            intent.putExtra("tweet_id", tweet.getId());
+            intent.putExtra("tweet_id", tweet.getTweetId());
             intent.putExtra("tweet", tweet.getTweet());
             context.startActivity(intent);
         });
 
         // Handle ImageView click for popup menu
         holder.actionImage.setOnClickListener(v -> {
-            if (userId.equals(tweet.getUserId())) {
+            if (tweet.getUserId().equals(tweet.getUserId())) {
 
                 PopupMenu popupMenu = new PopupMenu(context, v);
                 popupMenu.getMenuInflater().inflate(R.menu.tweet_edit, popupMenu.getMenu());
@@ -235,7 +161,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                         // Handle Edit action
 
                         Intent intent = new Intent(context, EditTweetActivity.class);
-                        intent.putExtra("tweet_id", tweet.getId());
+                        intent.putExtra("tweet_id", tweet.getTweetId());
                         intent.putExtra("tweet", tweet.getTweet());
                         context.startActivity(intent);
 
@@ -244,7 +170,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                     } else if (itemId == R.id.delete_tweet) {
                         // Handle Delete action
                         Toast.makeText(context, "Delete Post clicked", Toast.LENGTH_SHORT).show();
-                        deleteTweet(tweet.getId(), position);
+                        deleteTweet(tweet.getTweetId(), position);
                         return true;
                     } else {
                         return false;
@@ -259,7 +185,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
         ////////////////like
         try {
 
-            if (tweet.getLikedBy().contains(userId)) {
+            if (tweet.getLikedBy().contains(tweet.getUserId())) {
                 holder.likeButton.setImageResource(R.drawable.ic_heart_filled);
             } else {
                 holder.likeButton.setImageResource(R.drawable.ic_heart_outline);
@@ -273,7 +199,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
             DatabaseReference CommentsHolder = FirebaseDatabase
                     .getInstance()
                     .getReference("Tweets")
-                    .child(tweet.getId())
+                    .child(tweet.getTweetId())
                     .child("likedBy");
             CommentsHolder.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
@@ -285,47 +211,48 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
                         valuesList.add(value);
                     }
 
-
+                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(tweet.getUserId());
                     userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (valuesList.contains(userId)) {
-                                valuesList.remove(userId);
+                            if (valuesList.contains(tweet.getUserId())) {
+                                valuesList.remove(tweet.getUserId());
                                 FirebaseDatabase
                                         .getInstance()
                                         .getReference("Tweets")
-                                        .child(tweet.getId())
+                                        .child(tweet.getTweetId())
                                         .child("likedBy")
                                         .setValue(valuesList)
                                         .addOnCompleteListener(task2 -> {
                                             holder.likeButton.setImageResource(R.drawable.ic_heart_outline);
                                             tweet.setLikedBy(valuesList);
                                             tweetList.set(position, tweet);
+                                            tweet.setLikes(tweet.getLikes() - 1);
                                             updateTweets(tweetList);
                                             // update like count after unliking
-                                            holder.likeCountText.setText(valuesList.size()+ " likes");
-                                            notifyItemChanged(position);
+                                            holder.likeCountText.setText(tweetList.get(position).getLikedBy().size()+ " likes");
                                             holder.likeProgressBar.setVisibility(View.GONE);
-
+                                            notifyItemChanged(position);
                                         });
                             } else {
-                                valuesList.add(userId);
+                                valuesList.add(tweet.getUserId());
 
                                 FirebaseDatabase
                                         .getInstance()
                                         .getReference("Tweets")
-                                        .child(tweet.getId())
+                                        .child(tweet.getTweetId())
                                         .child("likedBy")
                                         .setValue(valuesList)
                                         .addOnCompleteListener(task2 -> {
                                             holder.likeButton.setImageResource(R.drawable.ic_heart_filled);
                                             tweet.setLikedBy(valuesList);
+                                            tweet.setLikes(tweet.getLikes()+ 1);
                                             tweetList.set(position, tweet);
                                             updateTweets(tweetList);
 
-                                            holder.likeCountText.setText(valuesList.size()+" likes");
-                                            notifyItemChanged(position);
+                                            holder.likeCountText.setText(tweetList.get(position).getLikedBy().size()+ " likes");
                                             holder.likeProgressBar.setVisibility(View.GONE);
+                                            notifyItemChanged(position);
                                         });
 
                             }
@@ -368,7 +295,7 @@ public class TweetAdapter extends RecyclerView.Adapter<TweetAdapter.TweetViewHol
 
 
 
-    private static String getFirstLetterUpperCased(String input) {
+    public static String getFirstLetterUpperCased(String input) {
         if (input == null || input.isEmpty()) {
             return input;
         }

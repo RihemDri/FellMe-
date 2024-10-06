@@ -208,11 +208,11 @@ public class AdminActivity extends AppCompatActivity {
 
                             // Create a BarEntry for this department with sentiment values
                             departmentEntries.add(new BarEntry(departments.size(), new float[]{
-                                    predictionMap.getOrDefault("Very Positive", 0L),
-                                    predictionMap.getOrDefault("Positive", 0L),
-                                    predictionMap.getOrDefault("Neutral", 0L),
-                                    predictionMap.getOrDefault("Negative", 0L),
-                                    predictionMap.getOrDefault("Very Negative", 0L)
+                                    predictionMap.getOrDefault("Very Positive", 0L).floatValue(),
+                                    predictionMap.getOrDefault("Positive", 0L).floatValue(),
+                                    predictionMap.getOrDefault("Neutral", 0L).floatValue(),
+                                    predictionMap.getOrDefault("Negative", 0L).floatValue(),
+                                    predictionMap.getOrDefault("Very Negative", 0L).floatValue()
                             }));
 
                             // Add the department name to the list for labeling
@@ -233,17 +233,20 @@ public class AdminActivity extends AppCompatActivity {
 
                         set.setStackLabels(new String[]{"Very Positive", "Positive", "Neutral", "Negative", "Very Negative"});
 
+                        set.setDrawValues(true);
+
                         BarData data = new BarData(set);
-                        departmentSentimentChart.setData(data);
                         float barWidth = 0.4f; // Example width, adjust as needed
                         data.setBarWidth(barWidth);
 
                         departmentSentimentChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(departments));
                         departmentSentimentChart.getXAxis().setGranularity(1f);
                         departmentSentimentChart.getXAxis().setGranularityEnabled(true);
-
-                        departmentSentimentChart.invalidate();
                         departmentSentimentChart.getDescription().setEnabled(false);
+
+                        departmentSentimentChart.clear(); // Clear previous data
+                        departmentSentimentChart.setData(data); // Set new data
+                        departmentSentimentChart.invalidate();
                     }
 
                     @Override

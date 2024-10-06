@@ -1,7 +1,10 @@
 package com.example.myapplication;
 
+import static com.example.myapplication.adapter.TweetAdapter.getFirstLetterUpperCased;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,12 +19,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.adapter.TweetAdapter;
 import com.example.myapplication.model.Tweet;
+import com.example.myapplication.model.TweetHolder;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +47,7 @@ public class Home extends AppCompatActivity {
 
     //Data
     private TweetAdapter adapter;
-    private List<Tweet> tweets = new ArrayList<>();
+    private List<TweetHolder> tweets = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,33 +80,94 @@ public class Home extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = auth.getCurrentUser();
 
-        if (firebaseUser == null ){
-            Toast.makeText(Home.this, "Something went wrong! User details are not available at the moment !  ", Toast.LENGTH_LONG).show();
+        if (firebaseUser == null) {
+            Toast.makeText(Home.this, "Something went wrong! User details are not available at the moment!", Toast.LENGTH_LONG).show();
             Intent intent = new Intent(Home.this, LoginActivity.class);
             startActivity(intent);
+            return;
         }
 
-        assert firebaseUser != null;
         DatabaseReference tweetsHolder = FirebaseDatabase.getInstance().getReference("Tweets");
-        tweetsHolder.get().addOnCompleteListener(task -> {
+        tweetsHolder.get().addOnSuccessListener(tweetsSnapshot -> {
             List<Tweet> valuesList = new ArrayList<>();
-            if (task.isSuccessful()) {
-                for (DataSnapshot snapshot : task.getResult().getChildren()) {
-                    // Access child data
-                    String key = snapshot.getKey(); // Key of the child
-                    Tweet value = snapshot.getValue(Tweet.class); // Value of the child
+            for (DataSnapshot snapshot : tweetsSnapshot.getChildren()) {
+                Tweet tweet = snapshot.getValue(Tweet.class);
+                valuesList.add(tweet);
+            }
 
-                    valuesList.add(value);
+            // Now handle getting user info and images for each tweet asynchronously
+            List<Task<TweetHolder>> tasks = new ArrayList<>();
+            for (Tweet tweet : valuesList) {
+                Task<TweetHolder> task = getUserAndImageInfo(tweet, firebaseUser);
+                tasks.add(task);
+            }
+
+            // Wait for all tasks to complete
+            Tasks.whenAllSuccess(tasks).addOnSuccessListener(objects -> {
+                List<TweetHolder> tweetHolderList = new ArrayList<>();
+                for (Object object : objects) {
+                    tweetHolderList.add((TweetHolder) object);
                 }
-                tweets = valuesList;
-                adapter.updateTweetsAndReverse(tweets);
+
+                Log.i("Home", "Tweets: " + tweetHolderList);
+
+                tweets = tweetHolderList;
+                adapter.updateTweets(tweets);
                 tweetList.setVisibility(View.VISIBLE);
                 progress.setVisibility(View.INVISIBLE);
-            } else {
-                Toast.makeText(Home.this, "Failed to get tweets" + task.getException().getMessage() ,Toast.LENGTH_LONG).show();
-            }
+            }).addOnFailureListener(e -> {
+                // Handle error
+                Log.e("Home", "Error fetching tweets or user info", e);
+                progress.setVisibility(View.INVISIBLE);
+            });
+        }).addOnFailureListener(e -> {
+            // Handle error retrieving tweets
+            Log.e("Home", "Error fetching tweets", e);
+            progress.setVisibility(View.INVISIBLE);
         });
     }
+
+    private Task<TweetHolder> getUserAndImageInfo(Tweet tweet, FirebaseUser firebaseUser) {
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(tweet.getUserId());
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference imageReference = storage.getReference().child("DisplayPics/" + tweet.getUserId() + ".jpg");
+
+        // Get user info
+        return userRef.get().continueWithTask(userSnapshotTask -> {
+            DataSnapshot tweetUserSnapshot = userSnapshotTask.getResult();
+            String userName;
+            String initials;
+
+            if (tweetUserSnapshot.exists() && tweetUserSnapshot.hasChild("fullName")) {
+                userName = tweetUserSnapshot.child("fullName").getValue(String.class);
+                initials = (userName != null && !userName.isEmpty()) ? getFirstLetterUpperCased(userName) : "No Name Found";
+            } else {
+                initials = "Unknown User";
+                userName = "Unknown User";
+            }
+
+            // Get image URL
+            return imageReference.getDownloadUrl().continueWith(imageUrlTask -> {
+                String imageUrl = imageUrlTask.isSuccessful() ? imageUrlTask.getResult().toString() : "";
+                // Create and return TweetHolder object
+                return new TweetHolder(
+                        tweet.getTweet(),
+                        tweet.getDate(),
+                        tweet.getTime(),
+                        tweet.getId(),
+                        tweet.getLikes(),
+                        tweet.getUserId(),
+                        imageUrl,
+                        userName,
+                        initials,
+                        tweet.getLikedBy(),
+                        tweet.getComments()
+                );
+            });
+        });
+    }
+
+
 
 
     //////////////   ///////////////////////////////////////////////////////////////////////////////////
