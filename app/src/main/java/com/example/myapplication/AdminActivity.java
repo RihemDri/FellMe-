@@ -411,6 +411,8 @@ public class AdminActivity extends AppCompatActivity {
                }
                // Find the most recent date
                Calendar mostRecentDate = getMostRecentDate(calendars);
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
 
                // Calculate the start and end of the month for the most recent date
                Calendar startOfMonth = Calendar.getInstance();
@@ -428,7 +430,16 @@ public class AdminActivity extends AppCompatActivity {
                // Count occurrences of each day of the week in the last month
                for (Calendar calendar : calendars) {
                    if (calendar.after(startOfMonth) && calendar.before(endOfMonth)) {
-                       DayOfWeek dayOfWeek = DayOfWeek.of(calendar.get(Calendar.DAY_OF_WEEK));
+                       Integer dayIndex = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+
+                        // Ensure dayIndex stays between 1 and 7
+                       if (dayIndex < 1) {
+                           dayIndex = 7;
+                       } else if (dayIndex > 7) {
+                           dayIndex = 1;
+                       }
+                       Log.i("Test","MostRecentDate: " + sdf.format(calendar.getTime()) + " " + DayOfWeek.of(dayIndex));
+                       DayOfWeek dayOfWeek = DayOfWeek.of(dayIndex);
                        dayOfWeekCounts.put(dayOfWeek, dayOfWeekCounts.get(dayOfWeek) + 1);
                    }
                }
@@ -861,13 +872,18 @@ public class AdminActivity extends AppCompatActivity {
             DayOfWeek dayOfWeek = daysOfWeek[i];
             float xValue = daysOfWeek.length - 1 - i; // Reverse the x-value
             int count = dayOfWeekCountMap.getOrDefault(dayOfWeek, 0);
+
+            // Add a small offset to ensure non-zero values are visible
+            if (count == 0) {
+                count = 1;  // Ensure even zero counts show something (if needed)
+            }
             entries.add(new BarEntry(xValue, count));
         }
 
         Log.i("Test data", " entries: " + entries);
 
         // Creating a dataset and assigning colors for each day
-        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts of last 30 day");
+        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts of Last 30 Days");
         dataSet.setColors(Color.CYAN);
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
@@ -875,14 +891,15 @@ public class AdminActivity extends AppCompatActivity {
         dataSet.setValueFormatter(new RoundedValueFormatter());
 
         BarData data = new BarData(dataSet);
-        data.setBarWidth(0.5f);
+        data.setBarWidth(0.5f); // Adjust bar width if necessary
 
-        // Customizing the Y-axis (which shows the day labels for horizontal chart)
+        // Customizing the X-axis (which shows the day labels for horizontal chart)
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
         xAxis.setDrawAxisLine(false);
         xAxis.setGranularity(1f);
+        xAxis.setLabelCount(7);  // Ensure there are 7 labels for the 7 days
         xAxis.setValueFormatter(new ValueFormatter() {
             private final String[] days = new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -892,23 +909,30 @@ public class AdminActivity extends AppCompatActivity {
             }
         });
 
-        // Customizing the axes
+        // Customizing the left Y-axis (not used in horizontal bar chart)
         YAxis leftAxis = chart.getAxisLeft();
-        leftAxis.setEnabled(false);
+        leftAxis.setEnabled(false); // Disable if not needed
 
+        // Customizing the right Y-axis for value range
         YAxis rightAxis = chart.getAxisRight();
         rightAxis.setDrawGridLines(false);
         rightAxis.setDrawAxisLine(false);
-        rightAxis.setAxisMinimum(0f);
-        rightAxis.setEnabled(false);
+        rightAxis.setAxisMinimum(0f);  // Ensure no negative values
+        rightAxis.setGranularity(1f);  // Control how values appear on the Y-axis
+        rightAxis.setEnabled(true);
 
+        // Remove chart description
         chart.getDescription().setEnabled(false);
+
+        // Allow chart to fit bars properly
         chart.setFitBars(true);
 
+        // Refresh chart with the data
         chart.setData(data);
         chart.animateY(1500);
         chart.invalidate();
     }
+
 
 
     //////////////   ///////////////////////////////////////////////////////////////////////////////////
