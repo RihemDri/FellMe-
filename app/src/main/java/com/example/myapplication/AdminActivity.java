@@ -59,7 +59,6 @@ import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -852,50 +851,48 @@ public class AdminActivity extends AppCompatActivity {
         List<BarEntry> entries = new ArrayList<>();
 
         // Define the order of days from Sunday to Saturday
-        DayOfWeek[] daysOfWeek = {DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY};
+        DayOfWeek[] daysOfWeek = {
+                DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
+        };
 
-        // Populate the entries from the dayOfWeekCountMap
-        for (int i = 0; i < daysOfWeek.length; i++) {
+        // Populate the entries from the dayOfWeekCountMap in reverse order
+        for (int i = daysOfWeek.length - 1; i >= 0; i--) {
             DayOfWeek dayOfWeek = daysOfWeek[i];
-            float xValue = i; // X-axis value is the index in the daysOfWeek array
+            float xValue = daysOfWeek.length - 1 - i; // Reverse the x-value
             int count = dayOfWeekCountMap.getOrDefault(dayOfWeek, 0);
             entries.add(new BarEntry(xValue, count));
         }
 
-        // Reverse the entries list to ensure the chart is ordered from Sunday to Saturday
-        Collections.reverse(entries);
+        Log.i("Test data", " entries: " + entries);
 
         // Creating a dataset and assigning colors for each day
-        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts of last 30 day ");
-        dataSet.setColors(Color.CYAN); // Set color for the bars
+        BarDataSet dataSet = new BarDataSet(entries, "Daily Counts of last 30 day");
+        dataSet.setColors(Color.CYAN);
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
 
-        // Set the custom value formatter
         dataSet.setValueFormatter(new RoundedValueFormatter());
 
         BarData data = new BarData(dataSet);
         data.setBarWidth(0.5f);
 
-        chart.setData(data);
-
-        // Customizing the X-axis
+        // Customizing the Y-axis (which shows the day labels for horizontal chart)
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
         xAxis.setDrawAxisLine(false);
         xAxis.setGranularity(1f);
         xAxis.setValueFormatter(new ValueFormatter() {
-            private final String[] days = new String[]{"Sat", "Fri", "Thu", "Wed", "Tue", "Mon", "Sun"};
+            private final String[] days = new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
             @Override
             public String getFormattedValue(float value) {
-                return days[(int) value % days.length];
+                return days[6 - ((int) value % days.length)]; // Reverse the index
             }
         });
 
-        // Customizing the Y-axis
+        // Customizing the axes
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setEnabled(false);
 
@@ -908,8 +905,9 @@ public class AdminActivity extends AppCompatActivity {
         chart.getDescription().setEnabled(false);
         chart.setFitBars(true);
 
+        chart.setData(data);
         chart.animateY(1500);
-        chart.invalidate(); // Refresh chart
+        chart.invalidate();
     }
 
 
